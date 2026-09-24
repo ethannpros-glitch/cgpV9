@@ -638,7 +638,8 @@ function localDb(){
   let all = {};
   try { all = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch(e){}
   const persist = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch(e){} };
-  const snap = (id, d) => ({id, exists: !!d, data: () => d});
+  const freeze = o => { if (o && typeof o === 'object'){ Object.values(o).forEach(freeze); Object.freeze(o); } return o; };
+  const snap = (id, d) => ({id, exists: !!d, data: () => d ? freeze(JSON.parse(JSON.stringify(d))) : undefined});
   return { collection(c){ return {
     async get(){ const o = all[c] || {}; const docs = Object.keys(o).map(id => snap(id, o[id])); return {docs, size:docs.length, empty:!docs.length}; },
     doc(id){ return {
@@ -696,13 +697,15 @@ async function load(){
       db.collection('budget_items').get(), db.collection('budget_months').get(), db.collection('objectifs').get(),
       db.collection('reglages').doc('main').get().catch(() => null)
     ]);
-    S.revenus = rv.docs.map(s => ({id:s.id, ...s.data()}));
-    S.depenses = dp.docs.map(s => ({id:s.id, ...s.data()}));
-    if (rs && rs.exists){ const r = rs.data(); S.ressources = {cc:r.cc ?? '', epargne:r.epargne ?? '', autres:r.autres ?? '', livretA:r.livretA ?? '', ldds:r.ldds ?? '', invest:r.invest ?? '', maj:r.maj || ''}; }
-    S.items = it.docs.map(s => ({id:s.id, ...s.data()}));
-    mo.docs.forEach(s => { S.months[s.id] = {recs: (s.data() || {}).recs || {}}; });
-    S.objectifs = ob.docs.map(s => ({id:s.id, ...s.data()}));
-    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10, mode: d.mode || 'lissage', pct: d.pct ?? 20, prov: d.prov ?? 28.5, salaire: d.salaire ?? 0, reserve: d.reserve ?? 3, pro: d.pro || {}}; }
+    // Les documents renvoyés par la base sont gelés (lecture seule) : on travaille sur des copies modifiables
+    const own = s => JSON.parse(JSON.stringify(s.data() || {}));
+    S.revenus = rv.docs.map(s => ({id:s.id, ...own(s)}));
+    S.depenses = dp.docs.map(s => ({id:s.id, ...own(s)}));
+    if (rs && rs.exists){ const r = own(rs); S.ressources = {cc:r.cc ?? '', epargne:r.epargne ?? '', autres:r.autres ?? '', livretA:r.livretA ?? '', ldds:r.ldds ?? '', invest:r.invest ?? '', maj:r.maj || ''}; }
+    S.items = it.docs.map(s => ({id:s.id, ...own(s)}));
+    mo.docs.forEach(s => { S.months[s.id] = {recs: own(s).recs || {}}; });
+    S.objectifs = ob.docs.map(s => ({id:s.id, ...own(s)}));
+    if (rg && rg.exists){ const d = own(rg); S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10, mode: d.mode || 'lissage', pct: d.pct ?? 20, prov: d.prov ?? 28.5, salaire: d.salaire ?? 0, reserve: d.reserve ?? 3, pro: d.pro || {}}; }
     setSave('À jour');
   } catch(e){
     setSave('Chargement impossible (' + ((e && e.code) || 'erreur') + '). Recharge la page.');

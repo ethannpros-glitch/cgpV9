@@ -11,7 +11,7 @@ if(process.env.MUT){
   await p.fill('#p-budget input[data-f=reel]','777');await p.dispatchEvent('#p-budget input[data-f=reel]','change');await p.waitForTimeout(100);
   await p.click('#nextM');await p.waitForTimeout(60);const k2=await p.$eval('#p-budget input[data-f=prevu]',e=>e.dataset.k);await p.fill(`[data-f=prevu][data-k="${k2}"]`,'2500');await p.dispatchEvent(`[data-f=prevu][data-k="${k2}"]`,'change');await p.waitForTimeout(100);
   await p.click('[data-tab=systeme]');await p.fill('[data-cfg=prov]','22');await p.dispatchEvent('[data-cfg=prov]','change');await p.waitForTimeout(100);
-  await p.fill('[data-cfg=salaire]','2100');await p.dispatchEvent('[data-cfg=salaire]','change');await p.waitForTimeout(100);
+  if(await p.$('#p-systeme [data-cfg=salaire]')){await p.fill('[data-cfg=salaire]','2100');await p.dispatchEvent('[data-cfg=salaire]','change');await p.waitForTimeout(100);}
   await p.click('[data-tab=objectifs]');await p.waitForTimeout(100);
   const l=await p.$('#p-objectifs [data-linkdep]');if(l){await l.click();await p.waitForTimeout(100);}
   const u=await p.$('#p-objectifs [data-up]');if(u){await u.click();await p.waitForTimeout(100);}
@@ -71,4 +71,19 @@ const nums=[...eq.matchAll(/(\d[\d\s  ]*?)[\s  ]€/g)].map(m=>N(m[1]));co
 chk(Math.abs(nums[0]-(N(r0[1])+N(r0[2])))<=2,`système: encaissés ${nums[0]} ≠ prévisionnel`);
 chk(Math.abs(nums[3]-N(r0[4]))<=2,`système: épargne ${nums[3]} ≠ prévisionnel ${r0[4]}`);
 chk(Math.abs(nums[1]+nums[2]-N(r0[3]))<=2,`système: provision+dépenses ${nums[1]+nums[2]} ≠ dépenses prévisionnel ${r0[3]}`);
+// 9. persistance : tout doit être identique après rechargement de la page
+if(process.env.MUT){
+  await p.click('[data-tab=previsionnel]');await p.waitForTimeout(100);await p.selectOption('#horizon','24');await p.waitForTimeout(100);
+  const before=await p.$eval('#mtable',e=>e.innerText);
+  await p.waitForTimeout(800);
+  await p.evaluate(()=>{window.__keep=1});
+  const stored=await p.evaluate(()=>localStorage.getItem('suivi_financier_local_v1'));
+  const p2=await b.newPage({viewport:{width:1300,height:1400}});p2.on('pageerror',e=>errs.push('rechargement: '+e.message));
+  await p2.addInitScript(s=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_tab','previsionnel')},stored);
+  await p2.goto('file://'+require('path').resolve(__dirname,'../suivi-financier.html'));await p2.waitForTimeout(500);
+  await p2.selectOption('#horizon','24');await p2.waitForTimeout(150);
+  const after=await p2.$eval('#mtable',e=>e.innerText);
+  chk(before===after,'rechargement : le prévisionnel change après rechargement (une action n\'a pas été enregistrée)');
+  const doneBefore=await p.evaluate(()=>0);
+}
 console.log('CONTRÔLES EN ÉCHEC',fails.length);fails.forEach(f=>console.log('  '+f));console.log('JS',errs);await b.close();})();
