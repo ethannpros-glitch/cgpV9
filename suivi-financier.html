@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Suivi financier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f1f2f5;--surface:#ffffff;--surface-2:#f6f7f9;--ink:#101828;--ink-2:#3a4458;--muted:#687186;--line:#e1e4ea;--line-2:#eceef2;
+  --rev:#2c4a8c;--rev-soft:#e4e9f5;--fix:#8e2c48;--fix-soft:#f4e4e9;--var:#5a4692;--var-soft:#ebe7f5;
+  --epa:#1e6a58;--epa-soft:#dfeee9;--gold:#9c7a3f;--gold-soft:#f2eadb;--free:#c7ccd6;
+  --hero:#0f1a2e;--hero-2:#1a2842;--hero-ink:#f3f1ec;--hero-muted:#a9b3c7;
+  --good:#1e7a55;--good-soft:#e0f0e8;--bad:#b3362b;--bad-soft:#f7e3e0;--warn:#9a6a14;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 20px rgba(16,24,40,.05);
+  --serif:"DM Serif Display",Georgia,"Times New Roman",serif;
+  --sans:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0b0e14;--surface:#131823;--surface-2:#1a2030;--ink:#eceef3;--ink-2:#c3c8d4;--muted:#8d95a7;--line:#262d3c;--line-2:#1e2433;
+  --rev:#93abe3;--rev-soft:#1c2740;--fix:#e38ba5;--fix-soft:#3a1e29;--var:#b7a5e8;--var-soft:#2a2342;
+  --epa:#7fc8b2;--epa-soft:#15302a;--gold:#d8b97f;--gold-soft:#332a1a;--free:#3a4152;
+  --hero:#070a10;--hero-2:#121827;--hero-ink:#f3f1ec;--hero-muted:#9aa4b8;
+  --good:#5cc79a;--good-soft:#15302a;--bad:#f08a7f;--bad-soft:#3a1d1a;--warn:#e0b45e;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b0e14;--surface:#131823;--surface-2:#1a2030;--ink:#eceef3;--ink-2:#c3c8d4;--muted:#8d95a7;--line:#262d3c;--line-2:#1e2433;
+  --rev:#93abe3;--rev-soft:#1c2740;--fix:#e38ba5;--fix-soft:#3a1e29;--var:#b7a5e8;--var-soft:#2a2342;
+  --epa:#7fc8b2;--epa-soft:#15302a;--gold:#d8b97f;--gold-soft:#332a1a;--free:#3a4152;
+  --hero:#070a10;--hero-2:#121827;--hero-ink:#f3f1ec;--hero-muted:#9aa4b8;
+  --good:#5cc79a;--good-soft:#15302a;--bad:#f08a7f;--bad-soft:#3a1d1a;--warn:#e0b45e;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font:14px/1.45 var(--sans);padding-inline:16px;padding-block:18px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:18px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:400}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.serif{font-family:var(--serif);font-weight:400}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,var(--hero),var(--hero-2));color:var(--hero-ink);border-radius:18px;padding:22px 24px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:18px 32px;align-items:flex-end}
+.hero h1{font:400 30px/1.1 var(--serif);letter-spacing:.01em}
+.hero p{margin:4px 0 0;color:var(--hero-muted);font-size:12.5px}
+.hero .figs{display:flex;flex-wrap:wrap;gap:14px 30px}
+.hero .fig small{display:block;color:var(--hero-muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.hero .fig b{font:400 26px/1.15 var(--serif)}
+.hero .fig b.neg{color:#f3a79d}
+.hero .fig b.pos{color:#9fdcc0}
+.savestate{font-size:11.5px;color:var(--hero-muted);margin-top:6px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs button{border:0;background:none;padding:10px 12px 11px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.tabs button:hover{color:var(--ink)}
+.panel{display:grid;gap:16px}
+
+/* Common */
+.card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+.eyebrow{font:600 10.5px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn.danger{color:var(--bad)}
+.btn.armed,.x.armed{background:var(--bad)!important;color:#fff!important;border-color:var(--bad)!important}
+.bar-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.hint{color:var(--muted);font-size:12.5px;margin:0;max-width:78ch}
+.pill{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.pro{background:var(--gold-soft);color:var(--gold)}
+.pill.plaisir{background:var(--fix-soft);color:var(--fix)}
+.pill.late{background:var(--bad-soft);color:var(--bad)}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.vendu{background:var(--rev-soft);color:var(--rev)}
+.monthnav{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.monthnav button{border:0;background:none;width:32px;height:32px;border-radius:50%;font-size:18px;color:var(--muted)}
+.monthnav button:hover{background:var(--surface-2);color:var(--ink)}
+.monthnav .cur{font:400 18px var(--serif);min-width:150px;text-align:center;text-transform:capitalize}
+.monthnav .today{width:auto;border-radius:999px;padding:0 12px;font-size:12.5px;font-weight:600}
+
+/* Dashboard KPIs */
+.kpis{display:grid;grid-template-columns:1.1fr 1.3fr .8fr .9fr;gap:14px}
+.donutbox{display:flex;align-items:center;gap:16px;margin-top:12px}
+.donutbox svg{width:118px;height:118px;flex:none}
+.legend{display:grid;gap:6px;font-size:12.5px;flex:1;min-width:0}
+.legend div{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:3px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:2px;margin-top:12px;font-size:12px}
+.seg button{border:0;background:none;padding:3px 11px;border-radius:999px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font-weight:600}
+.big{font:400 38px/1.1 var(--serif);text-align:center;margin-top:8px}
+.big.neg{color:var(--bad)}
+.kv{display:grid;gap:4px;font-size:12.5px;margin-top:12px}
+.kv div{display:flex;justify-content:space-between;gap:8px;color:var(--muted)}
+.kv b{color:var(--ink);font-weight:600}
+.bars{display:grid;gap:6px;margin-top:12px}
+.hbar{display:grid;grid-template-columns:82px 1fr 44px;gap:8px;align-items:center;font-size:12px}
+.hbar .track{height:7px;background:var(--var-soft);border-radius:4px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--var);border-radius:4px}
+.hbar.over .fill{background:var(--bad)}
+.hbar .p{text-align:right;color:var(--muted)}
+.hbar.over .p{color:var(--bad);font-weight:700}
+.stat{display:flex;flex-direction:column;justify-content:center;gap:8px;text-align:center}
+.stat .note{font-size:11.5px;color:var(--muted)}
+.meter{width:100%;height:24px;background:var(--fix-soft);border-radius:6px;overflow:hidden;position:relative}
+.meter span{position:absolute;inset:0 auto 0 0;background:var(--fix);color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;min-width:38px;border-radius:6px}
+.stat .v{font:400 30px/1.1 var(--serif)}
+.stat .l{font-size:12.5px;font-weight:600}
+.minigoals{display:grid;gap:7px;text-align:left;margin-top:4px}
+.minigoal{display:grid;gap:3px;font-size:12px}
+.minigoal .t{display:flex;justify-content:space-between;gap:6px}
+.minigoal .track{height:6px;border-radius:3px;background:var(--epa-soft);overflow:hidden}
+.minigoal .fill{height:100%;background:var(--epa)}
+
+/* Budget sections */
+.sections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.stack{display:grid;gap:14px}
+.sec{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.sec header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:13px 16px;background:var(--soft)}
+.sec header h2{font:400 19px var(--serif);color:var(--c)}
+.sec header .tot{font:400 24px var(--serif);color:var(--c)}
+.sec header small{display:block;font:500 11px var(--sans);color:var(--muted)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+.sec th{font-weight:500;font-style:italic;color:var(--muted);font-size:11.5px;padding:8px 6px 2px;text-align:right;white-space:nowrap}
+.sec th:first-child{text-align:left;padding-left:14px}
+.sec thead tr.sum td{font-weight:700;padding:2px 6px 8px;text-align:right;border-bottom:2px solid var(--c);white-space:nowrap}
+.sec thead tr.sum td.r{font-weight:500;font-style:italic;color:var(--muted)}
+.sec tbody td{padding:3px 6px;border-bottom:1px solid var(--line-2);text-align:right;white-space:nowrap}
+.sec tbody td:first-child{text-align:left;padding-left:14px;white-space:normal}
+.sec tbody td.r{font-style:italic;color:var(--muted)}
+.sec tbody td.r.neg{color:var(--bad);font-weight:700}
+.lbl{border:0;background:none;padding:3px 0;text-align:left;font-weight:600;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
+button.lbl:hover .name{text-decoration:underline}
+.meta{font-size:10.5px;color:var(--muted);font-weight:500}
+input.cell{width:70px;border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 5px;text-align:right}
+input.cell:hover{border-color:var(--line)}
+input.cell:focus{border-color:var(--c);background:var(--surface);outline:none}
+.ro{display:inline-block;width:70px;padding:3px 5px;text-align:right;color:var(--ink-2)}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--c,var(--ink));vertical-align:middle}
+tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-through;color:var(--muted)}
+.empty td{text-align:center!important;color:var(--muted);padding:16px!important}
+.add{display:block;width:100%;border:0;border-top:1px dashed var(--line);background:none;padding:9px;color:var(--c);font-weight:700;font-size:12.5px}
+.add:hover{background:var(--soft)}
+.s-rev{--c:var(--rev);--soft:var(--rev-soft)}
+.s-fix{--c:var(--fix);--soft:var(--fix-soft)}
+.s-var{--c:var(--var);--soft:var(--var-soft)}
+.s-epa{--c:var(--epa);--soft:var(--epa-soft)}
+
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.card h3{font:400 19px var(--serif);margin-bottom:10px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card h3 span{font:500 12px var(--sans);color:var(--muted)}
+.list{display:grid;font-size:13px}
+.li{display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-2)}
+.li:last-child{border-bottom:0}
+.li .d{font-size:12px;color:var(--muted)}
+.li .t{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
+.li .t i{width:8px;height:8px;border-radius:50%;flex:none}
+.li .a{font-weight:700}
+.li .a.in{color:var(--good)}
+
+/* Suivi tables (revenus / dépenses) */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat2{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:13px 16px}
+.stat2 b{font:400 22px/1.2 var(--serif);display:block}
+.stat2 small{color:var(--muted);font-size:11.5px}
+.stat2.dark{background:var(--hero);color:var(--hero-ink)}
+.stat2.dark small{color:var(--hero-muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.selbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--gold-soft);border-radius:10px;padding:9px 14px;font-weight:600;color:var(--gold);font-size:13px}
+.grid{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);overflow-x:auto}
+.grid table{min-width:880px}
+.grid th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:12px 10px;border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap}
+.grid th.sort{cursor:pointer;user-select:none}
+.grid th.sort:hover{color:var(--ink)}
+.grid td{padding:5px 8px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.grid tr:last-child td{border-bottom:0}
+.grid td input[type=text],.grid td input[type=date]{width:100%;border:1px solid transparent;background:transparent;border-radius:7px;padding:7px 8px;font-size:13.5px}
+.grid td input.amt{width:104px;text-align:right;border:1px solid transparent;background:transparent;border-radius:7px;padding:7px 8px;font-size:13.5px;font-weight:600}
+.grid td input:hover{border-color:var(--line)}
+.grid td input:focus{outline:none;border-color:var(--gold);background:var(--surface)}
+.grid td select{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600}
+.grid td select.pro{background:var(--gold-soft);color:var(--gold);border-color:transparent}
+.grid td select.perso{background:var(--surface-2);color:var(--ink-2);border-color:transparent}
+.grid td select.encaisse{background:var(--good-soft);color:var(--good);border-color:transparent}
+.grid td select.vendu{background:var(--rev-soft);color:var(--rev);border-color:transparent}
+.grid td select.avendre{background:var(--surface-2);color:var(--ink-2);border-color:transparent}
+.grid .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.x{border:1px solid transparent;background:none;color:var(--muted);border-radius:7px;padding:3px 8px;font-size:15px}
+.x:hover{color:var(--bad)}
+.x.armed{font-size:11.5px;font-weight:700}
+
+/* Objectifs */
+.goals{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.goal{display:grid;gap:10px}
+.goal .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.goal h4{margin:0;font:400 21px var(--serif)}
+.goal .sub{font-size:12px;color:var(--muted)}
+.goal .amount{font:400 30px/1 var(--serif)}
+.goal .amount small{font:500 13px var(--sans);color:var(--muted)}
+.gtrack{height:10px;border-radius:5px;background:var(--epa-soft);position:relative;overflow:visible}
+.gtrack .fill{height:100%;border-radius:5px;background:var(--epa)}
+.gtrack .proj{position:absolute;top:-4px;width:2px;height:18px;background:var(--gold)}
+.gkv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gkv div{background:var(--surface-2);border-radius:9px;padding:7px 10px}
+.gkv small{display:block;color:var(--muted);font-size:11px}
+.gkv b{font-weight:700;font-size:14px}
+.goal svg{width:100%;height:auto;display:block}
+
+/* Prévisionnel */
+.verdict{border-radius:14px;padding:18px 20px;display:grid;gap:14px}
+.verdict.pos{background:var(--good-soft)}
+.verdict.neg{background:var(--bad-soft)}
+.verdict .bar-row h3{margin:0}
+.vrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.vrows b{font:400 22px/1.2 var(--serif);display:block}
+.vrows small{color:var(--ink-2);font-size:11.5px}
+.banner{border-radius:10px;padding:11px 14px;font-size:13px;background:var(--bad-soft);color:var(--bad)}
+.banner.info{background:var(--gold-soft);color:var(--ink-2)}
+.chart{overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:560px;height:auto}
+.legend-row{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-bottom:8px}
+.legend-row i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.mtable{min-width:760px}
+.mtable th{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.mtable td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.mtable th:first-child,.mtable td:first-child{text-align:left}
+.mtable tr.cur td{background:var(--gold-soft)}
+.mtable tr.past td{color:var(--muted)}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+
+/* Ressources */
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.res label{display:grid;gap:6px;font-size:12.5px;color:var(--muted);font-weight:600}
+.res input{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:400 24px var(--serif);background:var(--surface-2);width:100%}
+
+/* Dialogs */
+dialog{border:0;border-radius:18px;padding:0;background:var(--surface);color:var(--ink);width:min(480px,calc(100vw - 32px));box-shadow:0 24px 70px rgba(0,0,0,.3)}
+dialog.wide{width:min(820px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(8,12,20,.55)}
+dialog form{padding:20px;display:grid;gap:12px}
+dialog h2{font:400 23px var(--serif)}
+.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--surface-2);color:var(--ink);font-size:14px;width:100%;font-weight:500}
+.f textarea{min-height:150px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dact{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:4px}
+.dact div{display:flex;gap:8px;flex-wrap:wrap}
+.preview{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.preview table{min-width:560px}
+.preview th{position:sticky;top:0;background:var(--surface-2);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:7px 8px;text-align:left}
+.preview td{padding:3px 6px;border-top:1px solid var(--line-2)}
+.preview td input{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:4px 6px;font-size:13px}
+.preview td input:focus{border-color:var(--gold);outline:none}
+.preview td input.amt{text-align:right;width:96px}
+.preview tr.off td{opacity:.45}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 15px;border-radius:9px;font-size:13px;z-index:30;box-shadow:var(--shadow)}
+
+@media (max-width:1080px){
+  .kpis{grid-template-columns:1fr 1fr}
+  .sections{grid-template-columns:1fr 1fr}
+  .duo{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  .kpis,.sections,.res{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr}
+  .hero h1{font-size:26px}
+  .big{font-size:32px}
+}
+@media (prefers-reduced-motion:no-preference){.hbar .fill,.meter span,.gtrack .fill,.minigoal .fill{transition:width .35s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <h1>Suivi financier</h1>
+      <p>Revenus pro et perso, charges, budget, épargne et objectifs, reliés dans un même prévisionnel</p>
+      <div class="savestate" id="saveState">Chargement…</div>
+    </div>
+    <div class="figs num">
+      <div class="fig"><small>Liquidités actuelles</small><b id="hRes">—</b></div>
+      <div class="fig"><small>Fin de mois prévue</small><b id="hFin">—</b></div>
+      <div class="fig"><small>Objectifs dans les temps</small><b id="hGoals">—</b></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="budget">Tableau de bord</button>
+    <button role="tab" data-tab="revenus">Revenus à venir</button>
+    <button role="tab" data-tab="depenses">Dépenses à venir</button>
+    <button role="tab" data-tab="objectifs">Objectifs</button>
+    <button role="tab" data-tab="previsionnel">Prévisionnel</button>
+    <button role="tab" data-tab="ressources">Ressources</button>
+  </nav>
+
+  <!-- TABLEAU DE BORD -->
+  <section class="panel" id="p-budget" hidden>
+    <div class="bar-row">
+      <div class="monthnav">
+        <button id="prevM" aria-label="Mois précédent">‹</button>
+        <span class="cur" id="curMonth"></span>
+        <button id="nextM" aria-label="Mois suivant">›</button>
+        <button id="todayM" class="today">Ce mois</button>
+      </div>
+      <button class="btn gold" data-import="budget">Import rapide</button>
+    </div>
+    <div class="kpis">
+      <div class="card">
+        <div class="eyebrow" style="text-align:center">Répartition du budget</div>
+        <div class="donutbox"><svg viewBox="0 0 42 42" id="donut" role="img" aria-label="Répartition du budget"></svg><div class="legend" id="legend"></div></div>
+        <div class="seg" role="group" aria-label="Base de calcul"><button id="dPrevu" aria-pressed="true">Prévu</button><button id="dReel" aria-pressed="false">Réel</button></div>
+      </div>
+      <div class="card">
+        <div class="eyebrow" style="text-align:center">Reste à dépenser</div>
+        <div class="big num" id="reste"></div>
+        <div class="kv num" id="resteKv"></div>
+        <div class="bars num" id="varBars"></div>
+      </div>
+      <div class="card stat">
+        <div class="note" id="consNote"></div>
+        <div class="meter"><span id="consBar"></span></div>
+        <div class="v num" id="depTot" style="color:var(--fix)"></div>
+        <div class="l" style="color:var(--fix)">Dépenses totales</div>
+      </div>
+      <div class="card stat">
+        <div class="note" id="epaNote"></div>
+        <div class="v num" id="epaTot" style="color:var(--epa)"></div>
+        <div class="l" style="color:var(--epa)">Épargne réalisée</div>
+        <div class="minigoals" id="miniGoals"></div>
+      </div>
+    </div>
+    <div class="sections">
+      <div class="stack"><section class="sec s-rev" id="sec-rev"></section><section class="sec s-epa" id="sec-epa"></section></div>
+      <section class="sec s-fix" id="sec-fix"></section>
+      <section class="sec s-var" id="sec-var"></section>
+    </div>
+    <div class="duo">
+      <div class="card"><h3>Ce qui reste à passer ce mois <span id="upCount"></span></h3><div class="list num" id="upcoming"></div></div>
+      <div class="card"><h3>Mois suivants <span>solde net prévu, tout compris</span></h3><div class="chart" id="miniProj"></div><p class="hint" style="margin-top:8px">Détail complet dans l'onglet Prévisionnel.</p></div>
+    </div>
+  </section>
+
+  <!-- REVENUS -->
+  <section class="panel" id="p-revenus" hidden>
+    <div class="stats num" id="revStats"></div>
+    <div class="bar-row">
+      <div class="chips" id="revFilters"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn gold" data-import="revenus">Import rapide</button><button class="btn primary" id="addRev">+ Ajouter un revenu</button></div>
+    </div>
+    <div class="selbar num" id="revSel" hidden><span id="revSelTxt"></span><button class="btn" id="revSelClear">Désélectionner</button></div>
+    <div class="grid"><table>
+      <thead><tr>
+        <th style="width:30px"><input type="checkbox" id="revAll" aria-label="Tout sélectionner"></th>
+        <th class="sort" data-sort="libelle">Libellé ↕</th><th>Type</th><th>Catégorie</th>
+        <th class="sort" data-sort="montant" style="text-align:right">Montant ↕</th><th>Statut</th>
+        <th class="sort" data-sort="date">Date ↕</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody id="revBody"></tbody>
+    </table></div>
+    <p class="hint">Chaque revenu daté apparaît automatiquement dans le Tableau de bord du mois concerné et dans le Prévisionnel. Passe-le en « Encaissé » ici ou coche-le dans le tableau de bord.</p>
+  </section>
+
+  <!-- DEPENSES -->
+  <section class="panel" id="p-depenses" hidden>
+    <div class="stats num" id="depStats"></div>
+    <div class="bar-row">
+      <p class="hint">Mensuelle : comptée chaque mois à partir de la date. Ponctuelle : comptée le mois de sa date. « Avancée » la compte dans le mois en cours.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn gold" data-import="depenses">Import rapide</button><button class="btn primary" id="addDep">+ Ajouter une dépense</button></div>
+    </div>
+    <div class="grid"><table>
+      <thead><tr>
+        <th class="sort" data-dsort="libelle">Libellé ↕</th><th>Catégorie</th>
+        <th class="sort" data-dsort="montant" style="text-align:right">Montant ↕</th><th>Récurrence</th>
+        <th class="sort" data-dsort="date">Date ↕</th><th>Avancée</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody id="depBody"></tbody>
+    </table></div>
+  </section>
+
+  <!-- OBJECTIFS -->
+  <section class="panel" id="p-objectifs" hidden>
+    <div class="bar-row">
+      <p class="hint">Un objectif suit un capital à atteindre à une date. Relie-le à une ligne d'épargne du tableau de bord (ou à toute ton épargne) : chaque versement coché s'ajoute à sa progression, et le versement prévu sert à estimer la date d'atteinte.</p>
+      <button class="btn primary" id="addGoal">+ Nouvel objectif</button>
+    </div>
+    <div class="goals" id="goals"></div>
+  </section>
+
+  <!-- PREVISIONNEL -->
+  <section class="panel" id="p-previsionnel" hidden>
+    <div class="banner" id="lateBanner" hidden></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="card">
+      <div class="bar-row" style="margin-bottom:10px">
+        <h3 style="margin:0">Entrées et sorties par mois</h3>
+        <label class="f" style="flex-direction:row;display:flex;align-items:center;gap:8px">Horizon
+          <select id="horizon" style="width:auto"><option value="6">6 mois</option><option value="12" selected>12 mois</option><option value="24">24 mois</option></select></label>
+      </div>
+      <div class="legend-row"><span><i style="background:var(--rev)"></i>Entrées</span><span><i style="background:var(--fix)"></i>Dépenses</span><span><i style="background:var(--epa)"></i>Épargne</span><span><i style="background:var(--gold)"></i>Compte courant projeté</span></div>
+      <div class="chart" id="projChart"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:16px 18px 6px"><h3>Détail mois par mois</h3><p class="hint">Entrées = revenus du budget + revenus datés (pro et perso). Dépenses = charges et budget variable + dépenses datées ou mensuelles. Pour le mois en cours, seul ce qui reste à passer modifie le compte courant projeté, qui part de tes ressources (compte courant + autres liquidités).</p></div>
+      <div class="scroll"><table class="mtable num" id="mtable"></table></div>
+    </div>
+  </section>
+
+  <!-- RESSOURCES -->
+  <section class="panel" id="p-ressources" hidden>
+    <p class="hint">Ce que tu as aujourd'hui. Le compte courant et les autres liquidités servent de point de départ au prévisionnel. L'épargne sert de base à tes objectifs.</p>
+    <div class="res">
+      <label>Compte courant (aujourd'hui)<input id="resCc" inputmode="decimal" placeholder="0" class="num"></label>
+      <label>Épargne<input id="resEpargne" inputmode="decimal" placeholder="0" class="num"></label>
+      <label>Autres liquidités<input id="resAutres" inputmode="decimal" placeholder="0" class="num"></label>
+    </div>
+    <div class="stat2 dark"><small>Total des ressources</small><b id="resTotal" class="num">0 €</b></div>
+    <details class="card">
+      <summary style="cursor:pointer;font-weight:700">Sauvegarde</summary>
+      <p class="hint" style="margin-top:8px">Copie de toutes tes données (revenus, dépenses, budget, objectifs, ressources) au format texte. Garde-la dans une note ; « Restaurer » remplace les données actuelles par celles collées.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="copyAll">Copier la sauvegarde</button></div>
+      <textarea id="restoreTxt" class="num" style="width:100%;min-height:80px;margin-top:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);padding:8px;font:12px ui-monospace,Menlo,monospace" placeholder="Colle une sauvegarde ici pour la restaurer"></textarea>
+      <div style="margin-top:8px"><button class="btn danger" id="restoreBtn">Restaurer cette sauvegarde</button></div>
+    </details>
+  </section>
+</div>
+
+<!-- Budget line dialog -->
+<dialog id="dlgItem"><form id="itemForm">
+  <h2 id="itemTitle">Nouvelle ligne</h2>
+  <label class="f">Libellé<input id="iLabel" required maxlength="60" placeholder="ex. Loyer, Salaire, Livret A"></label>
+  <div class="frow">
+    <label class="f">Rubrique<select id="iSection"><option value="rev">Revenus</option><option value="fix">Charges fixes</option><option value="var">Dépenses variables</option><option value="epa">Épargne &amp; invest.</option></select></label>
+    <label class="f">Pro ou perso<select id="iScope"><option value="perso">Perso</option><option value="pro">Pro</option></select></label>
+  </div>
+  <div class="frow">
+    <label class="f">Montant prévu (€)<input id="iAmount" inputmode="decimal" required placeholder="0,00"></label>
+    <label class="f" id="iTypeWrap">Nature<select id="iType"><option>Obligatoire</option><option>Plaisir</option></select></label>
+  </div>
+  <div class="frow">
+    <label class="f">Fréquence<select id="iFreq"><option value="mensuel">Tous les mois</option><option value="trimestriel">Tous les 3 mois</option><option value="annuel">Une fois par an</option><option value="ponctuel">Ponctuel (une fois)</option></select></label>
+    <label class="f">Jour du mois<input id="iDay" type="number" min="1" max="31" placeholder="optionnel"></label>
+  </div>
+  <div class="frow">
+    <label class="f"><span id="iStartLbl">À partir de</span><input id="iStart" type="month" required></label>
+    <label class="f" id="iEndWrap">Jusqu'à (inclus)<input id="iEnd" type="month"></label>
+  </div>
+  <p class="hint" id="iHint"></p>
+  <div class="dact">
+    <button type="button" class="btn danger" id="iDelete">Supprimer</button>
+    <div><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>
+  </div>
+</form></dialog>
+
+<!-- Goal dialog -->
+<dialog id="dlgGoal"><form id="goalForm">
+  <h2 id="goalTitle">Nouvel objectif</h2>
+  <label class="f">Nom<input id="gLabel" required maxlength="60" placeholder="ex. Apport immobilier, Capital 100 k€"></label>
+  <div class="frow">
+    <label class="f">Capital visé (€)<input id="gTarget" inputmode="decimal" required placeholder="50 000"></label>
+    <label class="f">À atteindre en<input id="gDeadline" type="month" required></label>
+  </div>
+  <div class="frow">
+    <label class="f">Déjà constitué (€)<input id="gStart" inputmode="decimal" placeholder="0"></label>
+    <label class="f">Rendement annuel estimé (%)<input id="gRate" inputmode="decimal" placeholder="0"></label>
+  </div>
+  <button type="button" class="btn" id="gUseRes" style="justify-self:start">Reprendre mon épargne actuelle (Ressources)</button>
+  <label class="f">Alimenté par<select id="gLink"></select></label>
+  <label class="f" id="gManualWrap">Versement mensuel prévu (€)<input id="gManual" inputmode="decimal" placeholder="0"></label>
+  <p class="hint" id="gHint"></p>
+  <div class="dact">
+    <button type="button" class="btn danger" id="gDelete">Supprimer</button>
+    <div><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>
+  </div>
+</form></dialog>
+
+<!-- Quick import dialog -->
+<dialog id="dlgImport" class="wide"><form id="importForm">
+  <h2>Import rapide</h2>
+  <p class="hint">Colle plusieurs lignes d'un coup : depuis Excel, Numbers, Google Sheets, un relevé bancaire ou tes notes. Chaque ligne doit contenir un libellé et un montant ; la date est facultative (formats 28/09/2026, 28/09, 2026-09-28). Un montant négatif est lu comme une dépense.</p>
+  <div class="frow">
+    <label class="f">Ajouter dans<select id="impDest">
+      <option value="revenus">Revenus à venir</option><option value="depenses">Dépenses à venir</option>
+      <option value="auto">Automatique (+ revenu, − dépense)</option>
+      <option value="b-rev">Budget : revenus récurrents</option><option value="b-fix">Budget : charges fixes</option>
+      <option value="b-var">Budget : dépenses variables</option><option value="b-epa">Budget : épargne</option></select></label>
+    <label class="f" id="impScopeWrap">Pro ou perso<select id="impScope"><option value="perso">Perso</option><option value="pro">Pro</option></select></label>
+  </div>
+  <label class="f">Lignes à importer<textarea id="impText" placeholder="Sudre - VL	222	28/09/2026&#10;Loola - VP ; 570 ; 05/10/2026&#10;05/10 Crédit auto -859,00 €"></textarea></label>
+  <div id="impPreviewWrap" hidden>
+    <div class="bar-row" style="margin-bottom:6px"><b id="impCount"></b><span class="hint">Corrige directement dans l'aperçu si besoin. Décoche une ligne pour l'ignorer.</span></div>
+    <div class="preview"><table><thead><tr><th></th><th>Libellé</th><th style="text-align:right">Montant</th><th>Date</th><th>Destination</th></tr></thead><tbody id="impRows"></tbody></table></div>
+  </div>
+  <div class="dact">
+    <span></span>
+    <div><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary" id="impGo" disabled>Importer</button></div>
+  </div>
+</form></dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+// ================= Helpers =================
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
+const eur0 = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const fmt = n => eur.format(n || 0), fmt0 = n => eur0.format(Math.round(n || 0));
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[\s €]/g,'').replace(',','.')); return isNaN(n) ? 0 : n; };
+const parseNum = v => { const s = String(v ?? '').replace(/[\s €]/g,'').replace(',','.'); if (s === '') return null; const n = parseFloat(s); return isNaN(n) ? null : Math.round(n*100)/100; };
+const numStr = n => n == null ? '' : (Math.round(n*100)/100).toFixed(2).replace('.',',');
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+const idx = k => { const [y,m] = k.split('-').map(Number); return y*12 + m - 1; };
+const mkey = i => `${Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}`;
+const addM = (k,n) => mkey(idx(k)+n);
+const NOW = new Date(), TODAY = NOW.getDate();
+const THIS = mkey(NOW.getFullYear()*12 + NOW.getMonth());
+const TODAY_ISO = `${THIS}-${String(TODAY).padStart(2,'0')}`;
+const mName = (k, opt={month:'long',year:'numeric'}) => { const i = idx(k); return new Date(Math.floor(i/12), i%12, 1).toLocaleDateString('fr-FR', opt); };
+const mShort = k => mName(k,{month:'short'}).replace('.','') + (k.slice(0,4) !== THIS.slice(0,4) ? ' ' + k.slice(2,4) : '');
+const body = o => { const {id, ...r} = o; return r; };
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => t.hidden = true, 2400); }
+function armed(btn, label, action){
+  btn.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (btn.classList.contains('armed')){ clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = btn._orig; action(); return; }
+    btn._orig = btn.textContent; btn.textContent = label; btn.classList.add('armed');
+    btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = btn._orig; }, 4000);
+  });
+}
+
+// ================= Storage (artifact db, or this browser as fallback) =================
+const LS_KEY = 'suivi_financier_local_v1';
+function localDb(){
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch(e){}
+  const persist = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch(e){} };
+  const snap = (id, d) => ({id, exists: !!d, data: () => d});
+  return { collection(c){ return {
+    async get(){ const o = all[c] || {}; const docs = Object.keys(o).map(id => snap(id, o[id])); return {docs, size:docs.length, empty:!docs.length}; },
+    doc(id){ return {
+      async get(){ return snap(id, (all[c]||{})[id]); },
+      async set(d){ (all[c] = all[c] || {})[id] = JSON.parse(JSON.stringify(d)); persist(); },
+      async delete(){ if (all[c]) delete all[c][id]; persist(); }
+    }; }
+  }; } };
+}
+let db = null, mode = 'loading';
+const pend = {};
+let saveMsg = '';
+function setSave(t){ saveMsg = t; $('saveState').textContent = (mode === 'local' ? 'Enregistré sur cet appareil uniquement · ' : '') + t; }
+function write(c, id, job){
+  const k = c + '/' + id;
+  const p = pend[k] = pend[k] || {chain: Promise.resolve(), timer: null, job: null};
+  p.job = job; clearTimeout(p.timer); setSave('Enregistrement…');
+  p.timer = setTimeout(() => {
+    const j = p.job; p.job = null; if (!j) return;
+    p.chain = p.chain.then(() => j.op === 'set' ? db.collection(c).doc(id).set(j.data) : db.collection(c).doc(id).delete())
+      .then(() => setSave('Enregistré'), e => setSave('Échec de l\'enregistrement (' + ((e && e.code) || 'erreur') + '). Recharge la page et réessaie.'));
+  }, 350);
+}
+const put = (c, id, data) => write(c, id, {op:'set', data});
+const del = (c, id) => write(c, id, {op:'del'});
+
+// ================= State =================
+const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:''}, items:[], months:{}, objectifs:[] };
+let tab = 'budget', month = THIS, donutMode = 'prevu';
+let typeFilter = 'tous', revSort = {f:null, dir:1}, depSort = {f:null, dir:1}, horizon = 12;
+const selected = new Set();
+
+async function load(){
+  let d = null;
+  try { if (window.claude && typeof window.claude.use === 'function') d = await window.claude.use('db'); } catch(e){}
+  db = d || localDb(); mode = d ? 'cloud' : 'local';
+  try {
+    const [rv, dp, rs, it, mo, ob] = await Promise.all([
+      db.collection('revenus').get(), db.collection('depenses').get(),
+      db.collection('ressources').doc('main').get().catch(() => null),
+      db.collection('budget_items').get(), db.collection('budget_months').get(), db.collection('objectifs').get()
+    ]);
+    S.revenus = rv.docs.map(s => ({id:s.id, ...s.data()}));
+    S.depenses = dp.docs.map(s => ({id:s.id, ...s.data()}));
+    if (rs && rs.exists){ const r = rs.data(); S.ressources = {cc:r.cc ?? '', epargne:r.epargne ?? '', autres:r.autres ?? ''}; }
+    S.items = it.docs.map(s => ({id:s.id, ...s.data()}));
+    mo.docs.forEach(s => { S.months[s.id] = {recs: (s.data() || {}).recs || {}}; });
+    S.objectifs = ob.docs.map(s => ({id:s.id, ...s.data()}));
+    setSave('À jour');
+  } catch(e){
+    setSave('Chargement impossible (' + ((e && e.code) || 'erreur') + '). Recharge la page.');
+  }
+  renderAll();
+}
+
+// ================= Budget model =================
+const SEC = {
+  rev:{title:'Revenus', reste:'À recevoir'},
+  fix:{title:'Charges fixes & échéances', reste:'Reste à payer'},
+  var:{title:'Dépenses variables', reste:'Reste à payer'},
+  epa:{title:'Épargne & invest.', reste:'Reste à verser'}
+};
+const COLOR = {rev:'var(--rev)', fix:'var(--fix)', var:'var(--var)', epa:'var(--epa)'};
+const FREQ = {mensuel:'mensuel', trimestriel:'tous les 3 mois', annuel:'annuel', ponctuel:'ponctuel'};
+function occurs(it, m){
+  const d = idx(m) - idx(it.start);
+  if (d < 0) return false;
+  if (it.end && idx(m) > idx(it.end)) return false;
+  return it.freq === 'mensuel' || (it.freq === 'trimestriel' && d % 3 === 0) || (it.freq === 'annuel' && d % 12 === 0) || (it.freq === 'ponctuel' && d === 0);
+}
+function depOccurs(d, m){
+  if (d.recurrente) return !d.date || d.date.slice(0,7) <= m;
+  const k = d.avancee ? THIS : (d.date ? d.date.slice(0,7) : null);
+  return k === m;
+}
+function mkLine(o){ o.reel = o.rawReel ?? 0; o.reste = o.done ? 0 : o.prevu - o.reel; o.eff = o.done ? o.reel : Math.max(o.prevu, o.reel); return o; }
+function monthLines(m){
+  const recs = (S.months[m] && S.months[m].recs) || {};
+  const out = {rev:[], fix:[], var:[], epa:[]};
+  S.items.forEach(it => {
+    if (!out[it.section] || !occurs(it, m)) return;
+    const r = recs[it.id] || {};
+    out[it.section].push(mkLine({key:it.id, src:'budget', ref:it, label:it.label, day:it.day ?? null, scope:it.scope || 'perso', type:it.type || '', freq:it.freq,
+      prevu: r.prevu ?? num(it.amount), override: r.prevu != null, rawReel: r.reel ?? null, done: !!r.done}));
+  });
+  S.revenus.forEach(rv => {
+    if (!rv.date || rv.date.slice(0,7) !== m) return;
+    const p = num(rv.montant), done = rv.statut === 'encaisse';
+    out.rev.push(mkLine({key:'r:'+rv.id, src:'rev', ref:rv, label:rv.libelle || 'Sans libellé', day:+rv.date.slice(8,10), scope:rv.type || 'perso', type:'', freq:'daté',
+      prevu:p, rawReel: done ? p : null, done, statut: rv.statut || 'avendre', late: !done && rv.date < TODAY_ISO}));
+  });
+  S.depenses.forEach(d => {
+    if (!depOccurs(d, m)) return;
+    const r = recs['d:'+d.id] || {};
+    out.fix.push(mkLine({key:'d:'+d.id, src:'dep', ref:d, label:d.libelle || 'Sans libellé', day: d.date ? +d.date.slice(8,10) : null,
+      scope: /pro/i.test(d.categorie || '') ? 'pro' : 'perso', type:'Obligatoire', freq: d.recurrente ? 'mensuel' : 'ponctuel',
+      prevu: r.prevu ?? num(d.montant), override: r.prevu != null, rawReel: r.reel ?? null, done: !!r.done}));
+  });
+  for (const s in out) out[s].sort((a,b) => (a.day ?? 99) - (b.day ?? 99) || a.label.localeCompare(b.label,'fr'));
+  return out;
+}
+function totals(m){
+  const L = monthLines(m), t = {};
+  for (const s in L){
+    const a = L[s];
+    t[s] = {lines:a, prevu:a.reduce((x,l)=>x+l.prevu,0), reel:a.reduce((x,l)=>x+l.reel,0), eff:a.reduce((x,l)=>x+l.eff,0), reste:a.reduce((x,l)=>x+l.reste,0)};
+  }
+  return t;
+}
+function setRec(m, k, patch){
+  const mo = S.months[m] = S.months[m] || {recs:{}};
+  const r = {...(mo.recs[k] || {}), ...patch};
+  Object.keys(r).forEach(x => { if (r[x] == null || r[x] === false) delete r[x]; });
+  if (Object.keys(r).length) mo.recs[k] = r; else delete mo.recs[k];
+  put('budget_months', m, {recs: mo.recs});
+}
+
+// ================= Objectifs model =================
+function monthlyOf(it){
+  if (it.end && idx(it.end) < idx(THIS)) return 0;
+  const a = num(it.amount);
+  return it.freq === 'mensuel' ? a : it.freq === 'trimestriel' ? a/3 : it.freq === 'annuel' ? a/12 : 0;
+}
+function linkedItems(g){
+  const ep = S.items.filter(i => i.section === 'epa');
+  return g.link === 'all' ? ep : g.link && g.link !== 'none' ? ep.filter(i => i.id === g.link) : [];
+}
+function goalStats(g){
+  const items = linkedItems(g), ids = new Set(items.map(i => i.id));
+  let verse = 0;
+  const from = g.debut || THIS;
+  for (let i = idx(from); i <= idx(THIS); i++){
+    const recs = (S.months[mkey(i)] || {}).recs || {};
+    ids.forEach(id => { if (recs[id] && recs[id].reel != null) verse += recs[id].reel; });
+  }
+  const actuel = num(g.depart) + verse;
+  const cible = num(g.cible);
+  const pmt = g.link && g.link !== 'none' ? items.reduce((a,i)=>a+monthlyOf(i),0) : num(g.manuel);
+  const n = Math.max(0, idx(g.echeance) - idx(THIS));
+  const r = num(g.rendement)/100/12;
+  const fv = (k) => r ? actuel*Math.pow(1+r,k) + pmt*(Math.pow(1+r,k)-1)/r : actuel + pmt*k;
+  const projete = fv(n);
+  let besoin = 0;
+  if (cible > actuel){
+    if (n === 0) besoin = cible - actuel;
+    else besoin = r ? (cible - actuel*Math.pow(1+r,n)) * r / (Math.pow(1+r,n)-1) : (cible - actuel)/n;
+    besoin = Math.max(0, besoin);
+  }
+  let reach = null;
+  if (actuel >= cible) reach = 0; else if (pmt > 0 || r > 0) { for (let k = 1; k <= 600; k++){ if (fv(k) >= cible){ reach = k; break; } } }
+  const status = actuel >= cible ? 'atteint' : projete >= cible ? 'ok' : 'retard';
+  return {items, verse, actuel, cible, pmt, n, r, projete, besoin, reach, status, fv};
+}
+function dur(n){ const y = Math.floor(n/12), m = n%12; return [y ? y+' an'+(y>1?'s':'') : '', m ? m+' mois' : ''].filter(Boolean).join(' ') || 'ce mois-ci'; }
+
+// ================= Render: header =================
+function totalRes(){ return num(S.ressources.cc) + num(S.ressources.epargne) + num(S.ressources.autres); }
+function renderHero(){
+  const t = totals(THIS);
+  const fin = t.rev.eff - t.fix.eff - t.var.eff - t.epa.eff;
+  $('hRes').textContent = fmt0(totalRes());
+  const hf = $('hFin'); hf.textContent = fmt0(fin); hf.className = fin < 0 ? 'neg' : 'pos';
+  const gs = S.objectifs.map(goalStats);
+  $('hGoals').textContent = gs.length ? `${gs.filter(g => g.status !== 'retard').length} / ${gs.length}` : 'Aucun';
+}
+
+// ================= Render: dashboard =================
+function renderBudget(){
+  $('curMonth').textContent = mName(month);
+  const t = totals(month);
+  for (const s in SEC) renderSection(s, t[s]);
+  renderKpis(t);
+  renderUpcoming(t);
+  renderMiniProj();
+}
+function renderSection(s, T){
+  const rows = T.lines.map(l => {
+    const k = l.key;
+    const meta = [l.day ? 'le ' + l.day : '', l.src === 'rev' ? 'revenu daté' : l.src === 'dep' ? (l.freq === 'mensuel' ? 'dépense mensuelle' : 'dépense datée') : (l.freq !== 'mensuel' ? FREQ[l.freq] : '')].filter(Boolean).join(' · ');
+    const tags = (l.scope === 'pro' ? '<span class="pill pro">Pro</span>' : '') + (l.type === 'Plaisir' ? '<span class="pill plaisir">Plaisir</span>' : '')
+      + (l.src === 'rev' && l.statut === 'vendu' ? '<span class="pill vendu">Vendu</span>' : '') + (l.late ? '<span class="pill late">En retard</span>' : '');
+    const goal = s === 'epa' ? S.objectifs.filter(g => g.link === 'all' || g.link === l.key).map(g => '→ ' + esc(g.label)).join(', ') : '';
+    const label = l.src === 'budget'
+      ? `<button class="lbl" data-edit="${l.ref.id}" title="Modifier la ligne"><span class="name">${esc(l.label)}</span>${tags}${meta || goal ? `<span class="meta">${esc(meta)}${meta && goal ? ' · ' : ''}${goal}</span>` : ''}</button>`
+      : `<button class="lbl" data-goto="${l.src === 'rev' ? 'revenus' : 'depenses'}" title="Modifier dans l'onglet ${l.src === 'rev' ? 'Revenus' : 'Dépenses'}"><span class="name">${esc(l.label)}</span>${tags}<span class="meta">${esc(meta)}</span></button>`;
+    const reelCell = l.src === 'rev' ? `<span class="ro num">${l.done ? numStr(l.reel) : '–'}</span>`
+      : `<input class="cell num" id="r-${k}" data-k="${k}" data-f="reel" inputmode="decimal" value="${numStr(l.rawReel)}" placeholder="–" aria-label="Réel ${esc(l.label)}">`;
+    return `<tr class="${l.done ? 'done' : ''}">
+      <td>${label}</td>
+      <td><input class="cell num" id="p-${k}" data-k="${k}" data-f="prevu" inputmode="decimal" value="${numStr(l.prevu)}" aria-label="Prévu ${esc(l.label)}" title="${l.src === 'rev' ? 'Montant du revenu' : 'Prévu pour ce mois uniquement'}"${l.override ? ' style="font-weight:700"' : ''}></td>
+      <td>${reelCell}</td>
+      <td class="r num ${l.reste < 0 ? 'neg' : ''}">${fmt(l.reste)}</td>
+      <td><input type="checkbox" data-k="${k}" data-f="done" ${l.done ? 'checked' : ''} aria-label="${s === 'rev' ? 'Encaissé' : s === 'epa' ? 'Versé' : 'Payé'} : ${esc(l.label)}" title="${s === 'rev' ? 'Encaissé' : s === 'epa' ? 'Versé' : 'Payé'}"></td>
+    </tr>`;
+  }).join('');
+  $('sec-'+s).innerHTML = `
+    <header><h2>${SEC[s].title}</h2><div class="tot num">${fmt(T.reel)}<small>sur ${fmt(T.eff)} prévus</small></div></header>
+    <div class="scroll"><table>
+      <thead><tr><th>Libellé</th><th>Prévu</th><th>Réel</th><th>${SEC[s].reste}</th><th></th></tr>
+      <tr class="sum num"><td></td><td>${fmt(T.prevu)}</td><td>${fmt(T.reel)}</td><td class="r">${fmt(T.reste)}</td><td></td></tr></thead>
+      <tbody>${rows || '<tr class="empty"><td colspan="5">Aucune ligne ce mois-ci</td></tr>'}</tbody>
+    </table></div>
+    <button class="add" data-add="${s}">+ Ajouter ${s === 'rev' ? 'un revenu récurrent' : s === 'epa' ? 'une épargne' : s === 'fix' ? 'une charge' : 'un poste variable'}</button>`;
+}
+function renderKpis(t){
+  const out = ['fix','var','epa'];
+  const reste = t.rev.reel - out.reduce((a,s)=>a+t[s].reel,0);
+  const aVenir = out.reduce((a,s)=>a+t[s].eff-t[s].reel,0);
+  const aRecevoir = t.rev.eff - t.rev.reel;
+  const fin = t.rev.eff - out.reduce((a,s)=>a+t[s].eff,0);
+  $('reste').textContent = fmt(reste); $('reste').className = 'big num' + (reste < 0 ? ' neg' : '');
+  $('resteKv').innerHTML = `
+    <div>Encaissé ce mois<b>${fmt(t.rev.reel)}</b></div>
+    <div>Revenus encore attendus<b>+ ${fmt(aRecevoir)}</b></div>
+    <div>Dépenses et épargne à venir<b>− ${fmt(aVenir)}</b></div>
+    <div>Prévision fin de mois<b class="${fin < 0 ? 'neg' : 'pos'}">${fmt(fin)}</b></div>`;
+  $('varBars').innerHTML = t.var.lines.map(l => {
+    const p = l.prevu > 0 ? l.reel/l.prevu : (l.reel > 0 ? 9.99 : 0);
+    return `<div class="hbar ${p > 1 ? 'over' : ''}"><span>${esc(l.label)}</span><div class="track"><div class="fill" style="width:${Math.min(p,1)*100}%"></div></div><span class="p">${Math.round(p*100)} %</span></div>`;
+  }).join('') || '<p class="hint" style="text-align:center">Ajoute des postes variables (courses, loisirs…) pour suivre leur consommation.</p>';
+
+  const dep = t.fix.reel + t.var.reel, budget = t.fix.eff + t.var.eff;
+  const pc = budget > 0 ? dep/budget : 0;
+  $('depTot').textContent = fmt(dep);
+  $('consNote').textContent = `${Math.round(pc*100)} % des dépenses prévues passées`;
+  const bar = $('consBar'); bar.style.width = Math.min(pc,1)*100 + '%'; bar.textContent = Math.round(pc*100) + ' %';
+  bar.style.background = pc > 1 ? 'var(--bad)' : 'var(--fix)';
+
+  $('epaTot').textContent = fmt(t.epa.reel);
+  $('epaNote').textContent = t.epa.eff === 0 ? 'Aucune épargne prévue ce mois' : t.epa.reel >= t.epa.eff ? 'Objectif du mois atteint' : `Prévu ce mois : ${fmt(t.epa.eff)}`;
+  $('miniGoals').innerHTML = S.objectifs.slice(0,3).map(g => { const st = goalStats(g); const p = st.cible ? Math.min(1, st.actuel/st.cible) : 0;
+    return `<div class="minigoal"><div class="t"><span>${esc(g.label)}</span><b class="num">${Math.round(p*100)} %</b></div><div class="track"><div class="fill" style="width:${p*100}%"></div></div></div>`; }).join('');
+
+  const k = donutMode;
+  const sumT = type => ['fix','var'].reduce((a,s)=>a+t[s].lines.filter(l => (l.type || 'Obligatoire') === type).reduce((b,l)=>b+l[k],0),0);
+  const parts = [{n:'Obligatoire', v:sumT('Obligatoire'), c:'var(--rev)'}, {n:'Plaisir', v:sumT('Plaisir'), c:'var(--fix)'}, {n:'Épargne', v:t.epa[k], c:'var(--epa)'}];
+  const used = parts.reduce((a,p)=>a+p.v,0), rev = k === 'prevu' ? t.rev.prevu : t.rev.reel;
+  parts.push({n:'Non affecté', v:Math.max(0, rev - used), c:'var(--free)'});
+  const total = parts.reduce((a,p)=>a+p.v,0);
+  let off = 25, svg = '<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-2)" stroke-width="5.5"/>';
+  if (total > 0) parts.forEach(p => { const pct = p.v/total*100; if (pct <= 0) return;
+    svg += `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${p.c}" stroke-width="5.5" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${off}"><title>${p.n} : ${fmt(p.v)}</title></circle>`; off -= pct; });
+  svg += `<text x="21" y="22.4" text-anchor="middle" font-size="4.4" fill="var(--ink)" font-family="DM Serif Display,Georgia,serif">${fmt0(rev)}</text><text x="21" y="26.8" text-anchor="middle" font-size="2.5" fill="var(--muted)" font-family="Manrope,sans-serif">de revenus</text>`;
+  $('donut').innerHTML = svg;
+  $('legend').innerHTML = parts.map(p => `<div><i style="background:${p.c}"></i><span>${p.n}</span><b class="num">${total > 0 ? (p.v/total*100).toFixed(1).replace('.',',') : '0'} %</b></div>`).join('');
+  $('dPrevu').setAttribute('aria-pressed', k === 'prevu'); $('dReel').setAttribute('aria-pressed', k === 'reel');
+}
+function renderUpcoming(t){
+  const items = [];
+  for (const s of ['rev','fix','epa','var']) t[s].lines.forEach(l => { if (!l.done && l.reste > 0.004) items.push({s,l}); });
+  items.sort((a,b) => (a.l.day ?? 99) - (b.l.day ?? 99));
+  const i = idx(month), cur = idx(THIS);
+  $('upCount').textContent = items.length ? `${items.length} ligne${items.length > 1 ? 's' : ''}` : '';
+  $('upcoming').innerHTML = items.map(({s,l}) => {
+    const late = l.day && s !== 'var' && (i < cur || (i === cur && l.day < TODAY));
+    const d = l.day ? `${l.day} ${mName(month,{month:'short'})}` : (s === 'var' ? 'budget' : '—');
+    return `<div class="li"><span class="d">${d}</span><span class="t"><i style="background:${COLOR[s]}"></i>${esc(l.label)}${l.scope === 'pro' ? '<span class="pill pro">Pro</span>' : ''}${late ? `<span class="pill late">${s === 'rev' ? 'non reçu' : 'en retard'}</span>` : ''}</span><span class="a ${s === 'rev' ? 'in' : ''}">${s === 'rev' ? '+' : '−'} ${fmt(l.reste)}</span></div>`;
+  }).join('') || '<p class="hint">Tout est passé pour ce mois.</p>';
+}
+function renderMiniProj(){
+  const data = []; for (let n = 1; n <= 6; n++){ const m = addM(month,n), t = totals(m); data.push({m, net: t.rev.eff - t.fix.eff - t.var.eff - t.epa.eff}); }
+  $('miniProj').innerHTML = barsSvg(data.map(d => ({label: mShort(d.m), v: d.net, title: `${mName(d.m)} : ${fmt(d.net)}`})), 520, 170);
+}
+function barsSvg(data, W, H){
+  const pl = 8, pr = 8, pt = 22, pb = 28;
+  const max = Math.max(0, ...data.map(d => d.v)), min = Math.min(0, ...data.map(d => d.v)), span = (max - min) || 1;
+  const y = v => pt + (max - v)/span*(H - pt - pb), bw = (W - pl - pr)/data.length;
+  let g = `<line x1="${pl}" x2="${W-pr}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  data.forEach((d,n) => {
+    const x = pl + n*bw + bw*.2, w = bw*.6, y0 = y(Math.max(d.v,0)), h = Math.max(1, Math.abs(y(d.v) - y(0)));
+    g += `<rect x="${x}" y="${y0}" width="${w}" height="${h}" rx="3" fill="${d.v < 0 ? 'var(--bad)' : 'var(--epa)'}"><title>${esc(d.title)}</title></rect>`;
+    g += `<text x="${x+w/2}" y="${d.v < 0 ? y(0)-5 : y0-5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${d.v < 0 ? 'var(--bad)' : 'var(--ink)'}">${fmt0(d.v).replace(/\s?€/,'')}</text>`;
+    g += `<text x="${x+w/2}" y="${H-9}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(d.label)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Solde net prévu par mois" font-family="Manrope,system-ui,sans-serif" style="min-width:${Math.min(W,420)}px">${g}</svg>`;
+}
+
+// ================= Render: revenus =================
+const TYPES = [['pro','Activité pro'],['perso','Perso']];
+const STATUTS = [['avendre','En cours / attendu'],['vendu','Vendu, pas encaissé'],['encaisse','Encaissé']];
+function sortList(list, s){
+  if (!s.f) return list;
+  return [...list].sort((a,b) => {
+    const va = a[s.f], vb = b[s.f];
+    const c = s.f === 'montant' ? num(va) - num(vb) : s.f === 'date' ? (va || '9999').localeCompare(vb || '9999') : String(va || '').toLowerCase().localeCompare(String(vb || '').toLowerCase(),'fr');
+    return c * s.dir;
+  });
+}
+const revView = () => sortList(typeFilter === 'tous' ? S.revenus : S.revenus.filter(l => l.type === typeFilter), revSort);
+function renderRevStats(){
+  const L = S.revenus, sum = f => L.filter(f).reduce((a,l)=>a+num(l.montant),0);
+  $('revStats').innerHTML = `
+    <div class="stat2 dark"><small>Cumul total</small><b>${fmt0(sum(()=>true))}</b></div>
+    <div class="stat2"><small>Activité pro</small><b style="color:var(--gold)">${fmt0(sum(l=>l.type==='pro'))}</b></div>
+    <div class="stat2"><small>Perso</small><b>${fmt0(sum(l=>l.type!=='pro'))}</b></div>
+    <div class="stat2"><small>En cours / attendu</small><b>${fmt0(sum(l=>(l.statut||'avendre')==='avendre'))}</b></div>
+    <div class="stat2"><small>Vendu, pas encaissé</small><b style="color:var(--rev)">${fmt0(sum(l=>l.statut==='vendu'))}</b></div>
+    <div class="stat2"><small>Déjà encaissé</small><b style="color:var(--good)">${fmt0(sum(l=>l.statut==='encaisse'))}</b></div>`;
+}
+function renderSel(){
+  const v = revView().filter(l => selected.has(l.id));
+  $('revSel').hidden = !v.length;
+  $('revSelTxt').textContent = `${v.length} ligne${v.length > 1 ? 's' : ''} sélectionnée${v.length > 1 ? 's' : ''} · total ${fmt0(v.reduce((a,l)=>a+num(l.montant),0))}`;
+  const all = revView(); $('revAll').checked = all.length > 0 && all.every(l => selected.has(l.id));
+}
+function renderRevenus(){
+  renderRevStats();
+  $('revFilters').innerHTML = [['tous','Tous'],...TYPES].map(([k,l]) => `<button class="chip" data-filter="${k}" aria-pressed="${typeFilter === k}">${l}</button>`).join('');
+  const v = revView();
+  $('revBody').innerHTML = v.map(l => `
+    <tr data-rid="${l.id}">
+      <td><input type="checkbox" class="rsel" ${selected.has(l.id) ? 'checked' : ''} aria-label="Sélectionner"></td>
+      <td><input type="text" data-rf="libelle" value="${esc(l.libelle)}" placeholder="Ex : Commission Dupont"></td>
+      <td><select data-rf="type" class="${l.type === 'pro' ? 'pro' : 'perso'}">${TYPES.map(([k,t]) => `<option value="${k}" ${k === (l.type || 'perso') ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
+      <td><input type="text" data-rf="categorie" value="${esc(l.categorie)}" placeholder="Client, or…"></td>
+      <td style="text-align:right"><input type="text" inputmode="decimal" class="amt num" data-rf="montant" value="${esc(l.montant)}" placeholder="0"></td>
+      <td><select data-rf="statut" class="${l.statut || 'avendre'}">${STATUTS.map(([k,t]) => `<option value="${k}" ${k === (l.statut || 'avendre') ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
+      <td><input type="date" data-rf="date" value="${esc(l.date || '')}"></td>
+      <td><input type="text" data-rf="note" value="${esc(l.note)}" placeholder="—"></td>
+      <td><button class="x" data-rdel="${l.id}" aria-label="Supprimer">×</button></td>
+    </tr>`).join('') || '<tr><td colspan="9" class="hint" style="text-align:center;padding:30px">Aucun revenu. Ajoute-en un ou utilise l\'import rapide.</td></tr>';
+  document.querySelectorAll('[data-sort]').forEach(th => th.style.color = th.dataset.sort === revSort.f ? 'var(--gold)' : '');
+  $('revBody').querySelectorAll('[data-rdel]').forEach(b => armed(b, 'Supprimer ?', () => {
+    const id = b.dataset.rdel; S.revenus = S.revenus.filter(l => l.id !== id); selected.delete(id); del('revenus', id); renderRevenus(); renderHero(); toast('Revenu supprimé');
+  }));
+  renderSel();
+}
+
+// ================= Render: dépenses =================
+function renderDepStats(){
+  const L = S.depenses;
+  const rec = L.filter(d => d.recurrente && (!d.date || d.date.slice(0,7) <= THIS)).reduce((a,d)=>a+num(d.montant),0);
+  const futur = L.filter(d => !d.recurrente && d.date && d.date.slice(0,7) >= THIS).reduce((a,d)=>a+num(d.montant),0);
+  const mois = rec + L.filter(d => !d.recurrente && depOccurs(d, THIS)).reduce((a,d)=>a+num(d.montant),0);
+  $('depStats').innerHTML = `
+    <div class="stat2"><small>Dépenses datées du mois en cours</small><b style="color:var(--fix)">${fmt0(mois)}</b></div>
+    <div class="stat2"><small>Mensuelles actives</small><b style="color:var(--fix)">${fmt0(rec)}</b></div>
+    <div class="stat2"><small>Ponctuelles à venir</small><b>${fmt0(futur)}</b></div>`;
+}
+function renderDepenses(){
+  renderDepStats();
+  const v = sortList(S.depenses, depSort);
+  $('depBody').innerHTML = v.map(l => `
+    <tr data-did="${l.id}">
+      <td><input type="text" data-df="libelle" value="${esc(l.libelle)}" placeholder="Ex : Loyer bureau, assurance"></td>
+      <td><input type="text" data-df="categorie" value="${esc(l.categorie)}" placeholder="Fixe, pro, perso…"></td>
+      <td style="text-align:right"><input type="text" inputmode="decimal" class="amt num" data-df="montant" value="${esc(l.montant)}" placeholder="0"></td>
+      <td><label class="chk"><input type="checkbox" data-df="recurrente" ${l.recurrente ? 'checked' : ''}> Mensuelle</label></td>
+      <td><input type="date" data-df="date" value="${esc(l.date || '')}" title="Mensuelle : mois de démarrage. Ponctuelle : date de la dépense."></td>
+      <td><label class="chk" title="Compter dans le mois en cours"><input type="checkbox" data-df="avancee" ${l.avancee ? 'checked' : ''} ${l.recurrente ? 'disabled' : ''}> Ce mois</label></td>
+      <td><input type="text" data-df="note" value="${esc(l.note)}" placeholder="—"></td>
+      <td><button class="x" data-ddel="${l.id}" aria-label="Supprimer">×</button></td>
+    </tr>`).join('') || '<tr><td colspan="8" class="hint" style="text-align:center;padding:30px">Aucune dépense. Ajoute-en une ou utilise l\'import rapide.</td></tr>';
+  document.querySelectorAll('[data-dsort]').forEach(th => th.style.color = th.dataset.dsort === depSort.f ? 'var(--gold)' : '');
+  $('depBody').querySelectorAll('[data-ddel]').forEach(b => armed(b, 'Supprimer ?', () => {
+    const id = b.dataset.ddel; S.depenses = S.depenses.filter(l => l.id !== id); del('depenses', id); renderDepenses(); renderHero(); toast('Dépense supprimée');
+  }));
+}
+
+// ================= Render: objectifs =================
+function renderGoals(){
+  if (!S.objectifs.length){
+    $('goals').innerHTML = `<div class="card"><h3>Aucun objectif</h3><p class="hint">Exemples : « Apport immobilier : 40 000 € en juin 2029 », « Capital 100 000 € dans 8 ans », « Épargne de précaution : 3 mois de dépenses ». Crée ton premier objectif avec le bouton ci-dessus.</p></div>`;
+    return;
+  }
+  $('goals').innerHTML = S.objectifs.map(g => {
+    const st = goalStats(g), p = st.cible ? Math.min(1, st.actuel/st.cible) : 0, pp = st.cible ? Math.min(1, st.projete/st.cible) : 0;
+    const pill = st.status === 'atteint' ? '<span class="pill ok">Atteint</span>' : st.status === 'ok' ? '<span class="pill ok">Dans les temps</span>' : '<span class="pill late">En retard</span>';
+    const src = g.link === 'all' ? 'toute l\'épargne du budget' : st.items[0] ? st.items[0].label : 'versement manuel';
+    const reachTxt = st.reach === 0 ? 'Déjà atteint' : st.reach == null ? 'Jamais au rythme actuel' : mName(addM(THIS, st.reach));
+    // Mini chart: projected path vs target
+    const n = Math.max(st.n, st.reach || 0, 6), W = 320, H = 90, steps = Math.min(n, 120);
+    const pts = []; for (let k = 0; k <= steps; k++){ const kk = Math.round(k*n/steps); pts.push([kk, st.fv(kk)]); }
+    const maxV = Math.max(st.cible, ...pts.map(q => q[1])) || 1;
+    const X = k => 4 + k/n*(W-8), Y = v => H - 6 - v/maxV*(H-18);
+    const path = pts.map((q,i) => (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ');
+    const dl = X(st.n);
+    const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projection du capital">
+      <line x1="4" x2="${W-4}" y1="${Y(st.cible)}" y2="${Y(st.cible)}" stroke="var(--gold)" stroke-dasharray="4 3"/>
+      <text x="${W-4}" y="${Y(st.cible)-4}" text-anchor="end" font-size="10" fill="var(--gold)" font-family="Manrope,sans-serif">cible ${fmt0(st.cible)}</text>
+      <line x1="${dl}" x2="${dl}" y1="8" y2="${H-6}" stroke="var(--line)"/>
+      <text x="${Math.min(dl+4, W-60)}" y="${H-8}" font-size="10" fill="var(--muted)" font-family="Manrope,sans-serif">échéance</text>
+      <path d="${path} L ${X(pts[pts.length-1][0])} ${H-6} L ${X(0)} ${H-6} Z" fill="var(--epa-soft)"/>
+      <path d="${path}" fill="none" stroke="var(--epa)" stroke-width="2"/></svg>`;
+    return `<article class="card goal">
+      <div class="top"><div><h4>${esc(g.label)}</h4><div class="sub">${fmt0(st.cible)} d'ici ${mName(g.echeance)} · dans ${dur(st.n)}</div></div>${pill}</div>
+      <div class="amount num">${fmt0(st.actuel)} <small>constitués · ${Math.round(p*100)} %</small></div>
+      <div class="gtrack" title="Trait doré : capital projeté à l'échéance"><div class="fill" style="width:${p*100}%"></div><div class="proj" style="left:calc(${pp*100}% - 1px)"></div></div>
+      <div class="gkv num">
+        <div><small>Versement prévu / mois</small><b>${fmt0(st.pmt)}</b></div>
+        <div><small>Nécessaire / mois</small><b class="${st.pmt + 0.5 >= st.besoin ? 'pos' : 'neg'}">${fmt0(st.besoin)}</b></div>
+        <div><small>Projeté à l'échéance</small><b>${fmt0(st.projete)}</b></div>
+        <div><small>Atteint au rythme actuel</small><b>${reachTxt}</b></div>
+      </div>
+      ${svg}
+      <div class="bar-row"><span class="hint">Alimenté par : ${esc(src)}${num(g.rendement) ? ` · rendement ${String(g.rendement).replace('.',',')} %/an` : ''}${st.verse ? ` · ${fmt0(st.verse)} versés depuis ${mName(g.debut || THIS)}` : ''}</span><button class="btn" data-goal="${g.id}">Modifier</button></div>
+    </article>`;
+  }).join('');
+}
+
+// ================= Render: prévisionnel =================
+function computeMonths(){
+  const res = [];
+  const start = num(S.ressources.cc) + num(S.ressources.autres);
+  let cc = start;
+  for (let n = -3; n <= horizon; n++){
+    const m = addM(THIS, n), t = totals(m);
+    const sum = (a, f) => a.filter(f).reduce((x,l)=>x+l.eff,0);
+    const entPro = sum(t.rev.lines, l => l.scope === 'pro'), entPerso = sum(t.rev.lines, l => l.scope !== 'pro');
+    const dep = t.fix.eff + t.var.eff, epa = t.epa.eff, ent = entPro + entPerso;
+    const net = ent - dep - epa;
+    const lateAmt = t.rev.lines.filter(l => l.late).reduce((x,l)=>x+l.prevu,0);
+    let ccEnd = null;
+    if (n === 0){ const restIn = t.rev.eff - t.rev.reel, restOut = ['fix','var','epa'].reduce((x,s)=>x+t[s].eff-t[s].reel,0); cc += restIn - restOut; ccEnd = cc; }
+    else if (n > 0){ cc += net; ccEnd = cc; }
+    res.push({m, n, entPro, entPerso, ent, dep, epa, net, ccEnd, lateAmt});
+  }
+  return {rows: res, start};
+}
+function renderPrev(){
+  const {rows, start} = computeMonths();
+  const late = rows.filter(r => r.n <= 0 && r.lateAmt > 0.5);
+  const lb = $('lateBanner');
+  lb.hidden = !late.length;
+  if (late.length) lb.innerHTML = `<b>${fmt0(late.reduce((a,r)=>a+r.lateAmt,0))}</b> de revenus datés dans le passé ne sont pas marqués « Encaissé » : ${late.map(r => `${mShort(r.m)} (${fmt0(r.lateAmt)})`).join(', ')}. Mets-les à jour dans Revenus à venir, sinon le prévisionnel les compte comme déjà reçus.`;
+
+  const period = +($('periodSel') ? $('periodSel').value : 3) || 3;
+  const fut = rows.filter(r => r.n >= 0 && r.n < period);
+  const low = fut.reduce((a,r) => r.ccEnd < a.v ? {v:r.ccEnd, m:r.m} : a, {v:Infinity, m:null});
+  const endCc = fut.length ? fut[fut.length-1].ccEnd : start;
+  const ok = low.v >= 0;
+  const v = $('verdict');
+  v.className = 'verdict ' + (ok ? 'pos' : 'neg');
+  v.innerHTML = `
+    <div class="bar-row"><h3>Sur ${period === 1 ? 'le mois en cours' : `les ${period} prochains mois`}</h3>
+      <div style="display:flex;gap:10px;align-items:center"><span class="pill ${ok ? 'ok' : 'late'}">${ok ? 'Trésorerie couverte' : 'Découvert prévu en ' + mName(low.m,{month:'long'})}</span>
+      <select id="periodSel" class="btn" style="padding:5px 8px">${[1,3,6,12].map(p => `<option value="${p}" ${p === period ? 'selected' : ''}>${p} mois</option>`).join('')}</select></div></div>
+    <div class="vrows num">
+      <div><b>${fmt0(start)}</b><small>Liquidités de départ (compte courant + autres)</small></div>
+      <div><b class="pos">${fmt0(fut.reduce((a,r)=>a+r.ent,0))}</b><small>Entrées prévues (pro + perso + budget)</small></div>
+      <div><b class="neg">${fmt0(fut.reduce((a,r)=>a+r.dep,0))}</b><small>Dépenses prévues</small></div>
+      <div><b style="color:var(--epa)">${fmt0(fut.reduce((a,r)=>a+r.epa,0))}</b><small>Versements d'épargne</small></div>
+      <div><b>${fmt0(endCc)}</b><small>Compte courant fin de période</small></div>
+      <div><b class="${low.v < 0 ? 'neg' : ''}">${low.m ? fmt0(low.v) : '—'}</b><small>Point le plus bas${low.m ? ' (' + mName(low.m,{month:'long'}) + ')' : ''}</small></div>
+    </div>`;
+  $('periodSel').onchange = renderPrev;
+
+  // Chart: grouped bars + projected current account line
+  const W = Math.max(1000, rows.length*62), H = 300, pl = 10, pr = 10, pt = 18, pb = 30;
+  const maxBar = Math.max(1, ...rows.map(r => Math.max(r.ent, r.dep + r.epa)));
+  const ccVals = rows.filter(r => r.ccEnd != null).map(r => r.ccEnd);
+  const maxV = Math.max(maxBar, ...ccVals), minV = Math.min(0, ...ccVals), span = maxV - minV || 1;
+  const y = v => pt + (maxV - v)/span*(H - pt - pb), bw = (W - pl - pr)/rows.length;
+  let g = `<line x1="${pl}" x2="${W-pr}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  const linePts = [];
+  rows.forEach((r,i) => {
+    const cx = pl + bw*i + bw/2, w = Math.min(16, bw*.3);
+    if (r.n === 0) g += `<rect x="${pl + bw*i}" y="${pt-6}" width="${bw}" height="${H-pt-pb+6}" fill="var(--gold-soft)" opacity=".6"/>`;
+    g += `<rect x="${cx-w-1}" y="${y(r.ent)}" width="${w}" height="${Math.max(0,y(0)-y(r.ent))}" rx="2" fill="var(--rev)" opacity="${r.n < 0 ? .45 : 1}"><title>${mName(r.m)} · entrées ${fmt(r.ent)} (pro ${fmt(r.entPro)}, perso ${fmt(r.entPerso)})</title></rect>`;
+    g += `<rect x="${cx+1}" y="${y(r.dep)}" width="${w}" height="${Math.max(0,y(0)-y(r.dep))}" rx="2" fill="var(--fix)" opacity="${r.n < 0 ? .45 : 1}"><title>${mName(r.m)} · dépenses ${fmt(r.dep)}</title></rect>`;
+    g += `<rect x="${cx+1}" y="${y(r.dep + r.epa)}" width="${w}" height="${Math.max(0,y(r.dep)-y(r.dep+r.epa))}" rx="2" fill="var(--epa)" opacity="${r.n < 0 ? .45 : 1}"><title>${mName(r.m)} · épargne ${fmt(r.epa)}</title></rect>`;
+    g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="10.5" fill="${r.n === 0 ? 'var(--ink)' : 'var(--muted)'}" font-weight="${r.n === 0 ? 700 : 500}">${esc(mShort(r.m))}</text>`;
+    if (r.ccEnd != null) linePts.push([cx, y(r.ccEnd), r]);
+  });
+  if (linePts.length){
+    g += `<path d="${linePts.map((p,i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--gold)" stroke-width="2.2"/>`;
+    linePts.forEach(([x,yy,r],i) => { g += `<circle cx="${x}" cy="${yy}" r="${i === linePts.length-1 ? 4 : 2.6}" fill="${r.ccEnd < 0 ? 'var(--bad)' : 'var(--gold)'}"><title>Compte courant fin ${mName(r.m)} : ${fmt(r.ccEnd)}</title></circle>`; });
+    const last = linePts[linePts.length-1];
+    g += `<text x="${last[0]-10}" y="${last[1] + (last[1] > H/2 ? -12 : 18)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--gold)">${fmt0(last[2].ccEnd)}</text>`;
+  }
+  $('projChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entrées, sorties et compte courant projeté" font-family="Manrope,system-ui,sans-serif" class="num">${g}</svg>`;
+
+  $('mtable').innerHTML = `<thead><tr><th>Mois</th><th>Entrées pro</th><th>Entrées perso</th><th>Dépenses</th><th>Épargne</th><th>Solde du mois</th><th>Compte courant fin de mois</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="${r.n === 0 ? 'cur' : r.n < 0 ? 'past' : ''}"><td>${mName(r.m)}${r.n === 0 ? ' · en cours' : ''}${r.lateAmt > 0.5 && r.n <= 0 ? ' <span class="pill late">retard</span>' : ''}</td>
+      <td>${fmt0(r.entPro)}</td><td>${fmt0(r.entPerso)}</td><td>${fmt0(r.dep)}</td><td>${fmt0(r.epa)}</td>
+      <td class="${r.net < 0 ? 'neg' : 'pos'}">${fmt0(r.net)}</td><td class="${r.ccEnd != null && r.ccEnd < 0 ? 'neg' : ''}">${r.ccEnd == null ? '—' : fmt0(r.ccEnd)}</td></tr>`).join('') + '</tbody>';
+}
+
+// ================= Render: ressources =================
+function renderRes(){
+  ['cc','epargne','autres'].forEach(k => { const el = $('res' + k[0].toUpperCase() + k.slice(1)); if (document.activeElement !== el) el.value = S.ressources[k] || ''; });
+  $('resTotal').textContent = fmt0(totalRes());
+}
+
+// ================= Tabs & global render =================
+const RENDER = {budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
+function renderAll(){
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'p-' + tab);
+  RENDER[tab]();
+  renderHero();
+}
+function goTab(t){ tab = t; try { localStorage.setItem('sf_tab', t); } catch(e){} renderAll(); window.scrollTo({top:0}); }
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) goTab(b.dataset.tab); });
+try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab'); if (RENDER[h]) tab = h; else if (s && RENDER[s]) tab = s; } catch(e){}
+
+function rerenderKeepFocus(){ setTimeout(() => { const a = document.activeElement && document.activeElement.id; renderAll(); if (a){ const n = $(a); if (n && n.focus) n.focus(); } }, 0); }
+
+// ================= Dashboard events =================
+$('prevM').onclick = () => { month = addM(month,-1); renderAll(); };
+$('nextM').onclick = () => { month = addM(month,1); renderAll(); };
+$('todayM').onclick = () => { month = THIS; renderAll(); };
+$('dPrevu').onclick = () => { donutMode = 'prevu'; renderAll(); };
+$('dReel').onclick = () => { donutMode = 'reel'; renderAll(); };
+$('p-budget').addEventListener('change', e => {
+  const el = e.target, k = el.dataset.k, f = el.dataset.f; if (!k || !f) return;
+  if (k.startsWith('r:')){
+    const rv = S.revenus.find(r => r.id === k.slice(2)); if (!rv) return;
+    if (f === 'done') rv.statut = el.checked ? 'encaisse' : 'avendre';
+    else if (f === 'prevu'){ const v = parseNum(el.value); rv.montant = v == null ? '' : String(v); }
+    put('revenus', rv.id, body(rv));
+  } else if (f === 'done'){
+    const L = monthLines(month); let line = null; for (const s in L){ line = L[s].find(l => l.key === k) || line; }
+    const patch = {done: el.checked};
+    if (el.checked && line && line.rawReel == null) patch.reel = line.prevu;
+    setRec(month, k, patch);
+  } else {
+    let v = parseNum(el.value);
+    if (f === 'prevu'){
+      const base = k.startsWith('d:') ? num((S.depenses.find(d => d.id === k.slice(2)) || {}).montant) : num((S.items.find(i => i.id === k) || {}).amount);
+      if (v === base) v = null;
+    }
+    setRec(month, k, {[f]: v});
+  }
+  rerenderKeepFocus();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList && (e.target.classList.contains('cell') || e.target.classList.contains('amt'))) e.target.blur(); });
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-add]'); if (a) return openItem(null, a.dataset.add);
+  const ed = e.target.closest('[data-edit]'); if (ed) return openItem(ed.dataset.edit);
+  const gt = e.target.closest('[data-goto]'); if (gt) return goTab(gt.dataset.goto);
+  const gl = e.target.closest('[data-goal]'); if (gl) return openGoal(gl.dataset.goal);
+  const im = e.target.closest('[data-import]'); if (im) return openImport(im.dataset.import);
+  const cl = e.target.closest('[data-close]'); if (cl) return cl.closest('dialog').close();
+});
+
+// ================= Revenus events =================
+$('revFilters').addEventListener('click', e => { const c = e.target.closest('[data-filter]'); if (c){ typeFilter = c.dataset.filter; renderRevenus(); } });
+document.querySelectorAll('[data-sort]').forEach(th => th.onclick = () => { const f = th.dataset.sort; revSort = {f, dir: revSort.f === f ? -revSort.dir : 1}; renderRevenus(); });
+document.querySelectorAll('[data-dsort]').forEach(th => th.onclick = () => { const f = th.dataset.dsort; depSort = {f, dir: depSort.f === f ? -depSort.dir : 1}; renderDepenses(); });
+$('revAll').onchange = e => { revView().forEach(l => e.target.checked ? selected.add(l.id) : selected.delete(l.id)); renderRevenus(); };
+$('revSelClear').onclick = () => { selected.clear(); renderRevenus(); };
+function newRevenu(o = {}){ return {id: uid(), libelle:'', type:'perso', categorie:'', montant:'', statut:'avendre', date:'', note:'', ...o}; }
+function newDepense(o = {}){ return {id: uid(), libelle:'', categorie:'', montant:'', recurrente:false, date:'', avancee:false, note:'', ...o}; }
+$('addRev').onclick = () => { const r = newRevenu({type: typeFilter === 'pro' ? 'pro' : 'perso'}); S.revenus.unshift(r); put('revenus', r.id, body(r)); revSort = {f:null, dir:1}; renderRevenus(); const i = $('revBody').querySelector('input[type=text]'); i && i.focus(); };
+$('addDep').onclick = () => { const d = newDepense(); S.depenses.unshift(d); put('depenses', d.id, body(d)); depSort = {f:null, dir:1}; renderDepenses(); const i = $('depBody').querySelector('input[type=text]'); i && i.focus(); };
+$('revBody').addEventListener('input', e => {
+  const tr = e.target.closest('[data-rid]'), f = e.target.dataset.rf; if (!tr || !f || e.target.tagName === 'SELECT') return;
+  const r = S.revenus.find(x => x.id === tr.dataset.rid); if (!r) return;
+  r[f] = f === 'montant' ? e.target.value.replace(',','.').replace(/[^\d.\-]/g,'') : e.target.value;
+  put('revenus', r.id, body(r));
+  if (f === 'montant'){ renderRevStats(); renderSel(); renderHero(); }
+});
+$('revBody').addEventListener('change', e => {
+  const tr = e.target.closest('[data-rid]'); if (!tr) return;
+  const id = tr.dataset.rid, r = S.revenus.find(x => x.id === id); if (!r) return;
+  if (e.target.classList.contains('rsel')){ e.target.checked ? selected.add(id) : selected.delete(id); renderSel(); return; }
+  const f = e.target.dataset.rf; if (!f) return;
+  if (e.target.tagName === 'SELECT' || f === 'date'){ r[f] = e.target.value; put('revenus', id, body(r)); if (e.target.tagName === 'SELECT') renderRevenus(); renderHero(); }
+});
+$('depBody').addEventListener('input', e => {
+  const tr = e.target.closest('[data-did]'), f = e.target.dataset.df; if (!tr || !f || e.target.type === 'checkbox' || e.target.type === 'date') return;
+  const d = S.depenses.find(x => x.id === tr.dataset.did); if (!d) return;
+  d[f] = f === 'montant' ? e.target.value.replace(',','.').replace(/[^\d.\-]/g,'') : e.target.value;
+  put('depenses', d.id, body(d)); if (f === 'montant'){ renderDepStats(); renderHero(); }
+});
+$('depBody').addEventListener('change', e => {
+  const tr = e.target.closest('[data-did]'), f = e.target.dataset.df; if (!tr || !f) return;
+  const d = S.depenses.find(x => x.id === tr.dataset.did); if (!d) return;
+  if (e.target.type === 'checkbox'){ d[f] = e.target.checked; if (f === 'recurrente' && d.recurrente) d.avancee = false; put('depenses', d.id, body(d)); renderDepenses(); renderHero(); }
+  else if (f === 'date'){ d.date = e.target.value; put('depenses', d.id, body(d)); renderDepStats(); renderHero(); }
+});
+
+// ================= Ressources events =================
+['cc','epargne','autres'].forEach(k => {
+  $('res' + k[0].toUpperCase() + k.slice(1)).addEventListener('input', e => {
+    S.ressources[k] = e.target.value.replace(',','.').replace(/[^\d.\-]/g,'');
+    put('ressources', 'main', {...S.ressources}); $('resTotal').textContent = fmt0(totalRes()); renderHero();
+  });
+});
+$('copyAll').onclick = () => {
+  const txt = JSON.stringify({v:2, ...S});
+  const fb = () => { $('restoreTxt').value = txt; $('restoreTxt').select(); toast('Sauvegarde affichée : copie-la'); };
+  try { navigator.clipboard.writeText(txt).then(() => toast('Sauvegarde copiée'), fb); } catch(e){ fb(); }
+};
+armed($('restoreBtn'), 'Confirmer : remplacer mes données', () => {
+  let d; try { d = JSON.parse($('restoreTxt').value); } catch(e){ return toast('Ce texte n\'est pas une sauvegarde valide'); }
+  if (!d || !Array.isArray(d.revenus) || !Array.isArray(d.depenses)) return toast('Ce texte n\'est pas une sauvegarde valide');
+  const sync = (coll, oldList, newList) => { const keep = new Set(newList.map(x => x.id)); oldList.forEach(x => { if (!keep.has(x.id)) del(coll, x.id); }); newList.forEach(x => put(coll, x.id, body(x))); };
+  sync('revenus', S.revenus, d.revenus); sync('depenses', S.depenses, d.depenses);
+  sync('budget_items', S.items, d.items || []); sync('objectifs', S.objectifs, d.objectifs || []);
+  const newMonths = d.months || {};
+  Object.keys(S.months).forEach(m => { if (!newMonths[m]) del('budget_months', m); });
+  Object.keys(newMonths).forEach(m => put('budget_months', m, {recs: newMonths[m].recs || {}}));
+  S.revenus = d.revenus; S.depenses = d.depenses; S.items = d.items || []; S.objectifs = d.objectifs || []; S.months = newMonths;
+  if (d.ressources){ S.ressources = d.ressources; put('ressources', 'main', {...S.ressources}); }
+  renderAll(); toast('Sauvegarde restaurée');
+});
+
+// ================= Budget item dialog =================
+let editingItem = null;
+function syncItemForm(){
+  const sec = $('iSection').value, fq = $('iFreq').value;
+  $('iTypeWrap').hidden = !(sec === 'fix' || sec === 'var');
+  $('iEndWrap').hidden = fq === 'ponctuel';
+  $('iStartLbl').textContent = fq === 'ponctuel' ? 'Mois' : 'À partir de';
+  $('iHint').textContent = fq === 'ponctuel' ? 'Apparaît uniquement le mois choisi.'
+    : 'Apparaît automatiquement chaque mois concerné. Tu peux ajuster le prévu d\'un mois précis directement dans le tableau. Pour arrêter la ligne, renseigne « Jusqu\'à ».';
+}
+function openItem(id, sec){
+  editingItem = id ? S.items.find(i => i.id === id) : null;
+  const it = editingItem || {section: sec || 'fix', label:'', amount:null, type:'Obligatoire', scope:'perso', freq:'mensuel', start:month, end:null, day:null};
+  $('itemTitle').textContent = editingItem ? 'Modifier la ligne' : 'Nouvelle ligne';
+  $('iLabel').value = it.label; $('iSection').value = it.section; $('iType').value = it.type || 'Obligatoire'; $('iScope').value = it.scope || 'perso';
+  $('iAmount').value = numStr(it.amount == null ? null : num(it.amount)); $('iDay').value = it.day ?? ''; $('iFreq').value = it.freq;
+  $('iStart').value = it.start; $('iEnd').value = it.end || '';
+  $('iDelete').hidden = !editingItem; $('iDelete').classList.remove('armed'); $('iDelete').textContent = 'Supprimer';
+  syncItemForm(); $('dlgItem').showModal(); $('iLabel').focus();
+}
+$('iSection').onchange = syncItemForm; $('iFreq').onchange = syncItemForm;
+['iAmount','iEnd'].forEach(i => $(i).addEventListener('input', e => e.target.setCustomValidity('')));
+$('itemForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const amount = parseNum($('iAmount').value);
+  if (amount == null){ $('iAmount').setCustomValidity('Saisis un montant, par exemple 45,90'); $('iAmount').reportValidity(); return; }
+  const start = $('iStart').value || month, freq = $('iFreq').value, end = freq === 'ponctuel' ? null : ($('iEnd').value || null);
+  if (end && idx(end) < idx(start)){ $('iEnd').setCustomValidity('La date de fin doit être après le début'); $('iEnd').reportValidity(); return; }
+  const sec = $('iSection').value, day = parseInt($('iDay').value, 10);
+  const data = {label: $('iLabel').value.trim(), section: sec, scope: $('iScope').value, type: (sec === 'fix' || sec === 'var') ? $('iType').value : '', amount, freq, start, end, day: day >= 1 && day <= 31 ? day : null};
+  let it = editingItem;
+  if (it) Object.assign(it, data); else { it = {id: uid(), ...data}; S.items.push(it); }
+  put('budget_items', it.id, body(it));
+  $('dlgItem').close(); renderAll(); toast(editingItem ? 'Ligne modifiée' : 'Ligne ajoutée');
+});
+armed($('iDelete'), 'Confirmer la suppression', () => {
+  if (!editingItem) return;
+  const id = editingItem.id;
+  S.items = S.items.filter(i => i.id !== id); del('budget_items', id);
+  for (const m in S.months){ if (S.months[m].recs[id]){ delete S.months[m].recs[id]; put('budget_months', m, {recs: S.months[m].recs}); } }
+  S.objectifs.forEach(g => { if (g.link === id){ g.link = 'none'; put('objectifs', g.id, body(g)); } });
+  $('dlgItem').close(); renderAll(); toast('Ligne supprimée');
+});
+
+// ================= Goal dialog =================
+let editingGoal = null;
+function syncGoalForm(){
+  const l = $('gLink').value; $('gManualWrap').hidden = l !== 'none';
+  $('gHint').textContent = l === 'none' ? 'Sans lien, la progression ne bouge que si tu modifies « Déjà constitué ». Relie plutôt l\'objectif à une ligne d\'épargne du tableau de bord.'
+    : 'Chaque mois, le montant réel coché de la ligne liée s\'ajoute au capital. Le versement prévu de la ligne sert à la projection.';
+}
+function openGoal(id){
+  editingGoal = id ? S.objectifs.find(g => g.id === id) : null;
+  const g = editingGoal || {label:'', cible:'', echeance: addM(THIS, 36), depart:'', rendement:'', link: 'all', manuel:''};
+  const ep = S.items.filter(i => i.section === 'epa');
+  $('gLink').innerHTML = `<option value="all">Toute l'épargne du budget (${ep.length} ligne${ep.length > 1 ? 's' : ''})</option>` + ep.map(i => `<option value="${i.id}">Ligne « ${esc(i.label)} » (${fmt0(monthlyOf(i))}/mois)</option>`).join('') + '<option value="none">Aucune, versement saisi à la main</option>';
+  $('goalTitle').textContent = editingGoal ? 'Modifier l\'objectif' : 'Nouvel objectif';
+  $('gLabel').value = g.label; $('gTarget').value = g.cible; $('gDeadline').value = g.echeance; $('gStart').value = g.depart;
+  $('gRate').value = g.rendement; $('gLink').value = g.link || 'none'; $('gManual').value = g.manuel || '';
+  $('gDelete').hidden = !editingGoal; $('gDelete').classList.remove('armed'); $('gDelete').textContent = 'Supprimer';
+  syncGoalForm(); $('dlgGoal').showModal(); $('gLabel').focus();
+}
+$('addGoal').onclick = () => openGoal(null);
+$('gLink').onchange = syncGoalForm;
+$('gUseRes').onclick = () => { $('gStart').value = String(num(S.ressources.epargne)).replace('.',','); };
+$('gTarget').addEventListener('input', e => e.target.setCustomValidity(''));
+$('gDeadline').addEventListener('input', e => e.target.setCustomValidity(''));
+$('goalForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const cible = parseNum($('gTarget').value);
+  if (!cible || cible <= 0){ $('gTarget').setCustomValidity('Indique le capital visé, par exemple 50000'); $('gTarget').reportValidity(); return; }
+  if (idx($('gDeadline').value) < idx(THIS)){ $('gDeadline').setCustomValidity('Choisis une échéance à partir de ce mois'); $('gDeadline').reportValidity(); return; }
+  const data = {label: $('gLabel').value.trim(), cible: String(cible), echeance: $('gDeadline').value, depart: String(parseNum($('gStart').value) || 0),
+    rendement: String(parseNum($('gRate').value) || 0), link: $('gLink').value, manuel: String(parseNum($('gManual').value) || 0)};
+  let g = editingGoal;
+  if (g) Object.assign(g, data); else { g = {id: uid(), debut: THIS, ...data}; S.objectifs.push(g); }
+  put('objectifs', g.id, body(g));
+  $('dlgGoal').close(); renderAll(); toast(editingGoal ? 'Objectif modifié' : 'Objectif créé');
+});
+armed($('gDelete'), 'Confirmer la suppression', () => {
+  if (!editingGoal) return;
+  S.objectifs = S.objectifs.filter(g => g !== editingGoal); del('objectifs', editingGoal.id);
+  $('dlgGoal').close(); renderAll(); toast('Objectif supprimé');
+});
+
+// ================= Quick import =================
+let impRows = [];
+const DEST_LABEL = {revenus:'Revenu', depenses:'Dépense', 'b-rev':'Budget · revenu', 'b-fix':'Budget · charge', 'b-var':'Budget · variable', 'b-epa':'Budget · épargne'};
+function openImport(ctx){
+  $('impDest').value = ctx === 'revenus' ? 'revenus' : ctx === 'depenses' ? 'depenses' : 'auto';
+  $('impText').value = ''; impRows = []; renderImp();
+  $('dlgImport').showModal(); $('impText').focus();
+}
+function parseDate(s){
+  let m = s.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if (m) return {iso:`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`, raw:m[0]};
+  m = s.match(/\b(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?\b/);
+  if (m && +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12){
+    let y = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : THIS.slice(0,4);
+    return {iso:`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`, raw:m[0]};
+  }
+  return null;
+}
+function parseLine(line){
+  let s = line.trim(); if (!s) return null;
+  const date = parseDate(s); if (date) s = s.replace(date.raw, ' ');
+  // Amount: last number-looking token (supports 1 234,56 / 1234.56 / -859,00 € / 1.234,56)
+  const re = /[-+−]?\s?\d{1,3}(?:[  .]\d{3})*(?:,\d{1,2})?(?:\.\d{1,2})?\s?€?|[-+−]?\d+(?:[.,]\d{1,2})?\s?€?/g;
+  let mm, last = null; while ((mm = re.exec(s))) { if (/\d/.test(mm[0])) last = mm; }
+  if (!last) return null;
+  let raw = last[0].replace(/[€\s ]/g,'').replace('−','-');
+  if (/,\d{1,2}$/.test(raw)) raw = raw.replace(/\./g,'').replace(',','.'); else if (/\.\d{3}(\.|$)/.test(raw)) raw = raw.replace(/\./g,'');
+  const amount = parseFloat(raw); if (isNaN(amount)) return null;
+  const label = (s.slice(0, last.index) + ' ' + s.slice(last.index + last[0].length)).replace(/[\t;|]+/g,' ').replace(/\s{2,}/g,' ').replace(/^[\s\-–:,]+|[\s\-–:,]+$/g,'').trim();
+  return {on:true, label: label || 'Sans libellé', amount, date: date ? date.iso : ''};
+}
+function destFor(r){
+  const d = $('impDest').value;
+  return d === 'auto' ? (r.amount < 0 ? 'depenses' : 'revenus') : d;
+}
+function renderImp(){
+  const has = impRows.length > 0;
+  $('impPreviewWrap').hidden = !has;
+  const n = impRows.filter(r => r.on).length;
+  $('impCount').textContent = `${n} ligne${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} à importer`;
+  $('impGo').disabled = !n; $('impGo').textContent = n ? `Importer ${n} ligne${n > 1 ? 's' : ''}` : 'Importer';
+  const d = $('impDest').value; $('impScopeWrap').hidden = d === 'depenses';
+  $('impRows').innerHTML = impRows.map((r,i) => `<tr class="${r.on ? '' : 'off'}" data-i="${i}">
+    <td><input type="checkbox" data-if="on" ${r.on ? 'checked' : ''} aria-label="Importer cette ligne" style="width:16px"></td>
+    <td><input type="text" data-if="label" value="${esc(r.label)}"></td>
+    <td><input type="text" inputmode="decimal" class="amt num" data-if="amount" value="${numStr(r.amount)}"></td>
+    <td><input type="date" data-if="date" value="${esc(r.date)}"></td>
+    <td><span class="pill ${destFor(r) === 'revenus' ? 'ok' : 'late'}">${DEST_LABEL[destFor(r)]}</span></td></tr>`).join('');
+}
+$('impText').addEventListener('input', () => { impRows = $('impText').value.split(/\r?\n/).map(parseLine).filter(Boolean); renderImp(); });
+$('impDest').onchange = renderImp;
+$('impRows').addEventListener('change', e => {
+  const tr = e.target.closest('[data-i]'), f = e.target.dataset.if; if (!tr || !f) return;
+  const r = impRows[+tr.dataset.i];
+  if (f === 'on') r.on = e.target.checked; else if (f === 'amount') r.amount = parseNum(e.target.value) ?? 0; else r[f] = e.target.value;
+  renderImp();
+});
+$('importForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const scope = $('impScope').value; let n = 0;
+  impRows.filter(r => r.on).forEach(r => {
+    const d = destFor(r), a = Math.abs(r.amount);
+    if (d === 'revenus'){ const x = newRevenu({libelle:r.label, montant:String(a), date:r.date, type:scope}); S.revenus.unshift(x); put('revenus', x.id, body(x)); }
+    else if (d === 'depenses'){ const x = newDepense({libelle:r.label, montant:String(a), date:r.date}); S.depenses.unshift(x); put('depenses', x.id, body(x)); }
+    else {
+      const sec = d.slice(2), day = r.date ? +r.date.slice(8,10) : null;
+      const x = {id: uid(), label:r.label, section:sec, scope, type:(sec === 'fix' || sec === 'var') ? 'Obligatoire' : '', amount:a, freq:'mensuel', start: r.date ? r.date.slice(0,7) : month, end:null, day};
+      S.items.push(x); put('budget_items', x.id, body(x));
+    }
+    n++;
+  });
+  $('dlgImport').close(); renderAll(); toast(`${n} ligne${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''}`);
+});
+
+renderAll();
+load();
+})();
+</script>
+</body>
+</html>
