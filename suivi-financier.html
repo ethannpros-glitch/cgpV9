@@ -249,6 +249,21 @@ tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-t
 .flash td{animation:flash 2.2s ease}
 @keyframes flash{0%,40%{background:var(--gold-soft)}100%{background:transparent}}
 .grid td input.missing{border-color:var(--bad)!important}
+.reco-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:6px 0 14px}
+.reco-kpis div{background:var(--surface-2);border-radius:10px;padding:9px 12px}
+.reco-kpis small{display:block;color:var(--muted);font-size:11.5px}
+.reco-kpis b{font:400 21px/1.2 var(--serif)}
+.advice{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+.advice.good{background:var(--good-soft);color:var(--good)}
+.advice.bad{background:var(--bad-soft);color:var(--bad)}
+.advice.info{background:var(--gold-soft);color:var(--ink-2)}
+.alloc{display:grid;gap:7px;margin-top:6px}
+.alloc .row{display:grid;grid-template-columns:minmax(120px,190px) 1fr 90px;gap:10px;align-items:center;font-size:12.5px}
+.alloc .track{height:9px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.alloc .fill{height:100%;background:var(--epa);border-radius:5px}
+.sup td input{width:70px;border:1px solid var(--line);border-radius:7px;padding:4px 6px;text-align:right;background:var(--surface-2)}
+.explain{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:12.5px;color:var(--ink-2)}
+.explain b{color:var(--ink)}
 
 /* Ressources */
 .res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -311,7 +326,7 @@ dialog h2{font:400 23px var(--serif)}
     <button role="tab" data-tab="budget">Tableau de bord</button>
     <button role="tab" data-tab="revenus">Revenus à venir</button>
     <button role="tab" data-tab="depenses">Dépenses à venir</button>
-    <button role="tab" data-tab="objectifs">Objectifs</button>
+    <button role="tab" data-tab="objectifs">Objectifs &amp; épargne</button>
     <button role="tab" data-tab="previsionnel">Prévisionnel</button>
     <button role="tab" data-tab="ressources">Ressources</button>
   </nav>
@@ -327,6 +342,13 @@ dialog h2{font:400 23px var(--serif)}
       </div>
       <button class="btn gold" data-import="budget">Import rapide</button>
     </div>
+    <details class="card" style="padding:10px 16px"><summary style="cursor:pointer;font-weight:700;font-size:13px">Prévu, réel, reste : comment lire le tableau</summary>
+      <div class="explain" style="margin-top:10px">
+        <div><b>Prévu</b> : le montant attendu ou budgété (ton salaire, ton loyer, ton budget courses). Modifié ici, il ne change que ce mois-ci.</div>
+        <div><b>Réel</b> : ce qui est vraiment passé sur ton compte. Pour les courses, tu peux le mettre à jour au fil du mois (210 € dépensés sur 350 € prévus).</div>
+        <div><b>Reste</b> : prévu − réel. Ce qu'il reste à payer, à recevoir ou à verser. En rouge si tu dépasses.</div>
+        <div><b>La case</b> : « c'est passé, ligne terminée ». Si le réel est vide, elle le remplit avec le prévu ; la décocher annule exactement ça.</div>
+      </div></details>
     <div class="kpis">
       <div class="card">
         <div class="eyebrow" style="text-align:center">Répartition du budget</div>
@@ -409,10 +431,15 @@ dialog h2{font:400 23px var(--serif)}
   <section class="panel" id="p-objectifs" hidden>
     <div class="bar-row">
       <p class="hint">Un objectif suit un capital à atteindre à une date. Relie-le à une ligne d'épargne du tableau de bord (ou à toute ton épargne) : chaque versement coché s'ajoute à sa progression, et le versement prévu sert à estimer la date d'atteinte.</p>
-      <button class="btn primary" id="addGoal">+ Nouvel objectif</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="addPrec">+ Épargne de précaution</button><button class="btn primary" id="addGoal">+ Nouvel objectif</button></div>
     </div>
+    <div class="card" id="reco"></div>
     <div class="goals" id="goals"></div>
     <div class="card" id="epaRec"></div>
+    <details class="card"><summary style="cursor:pointer;font:400 19px var(--serif)">Placements et rendements utilisés</summary>
+      <p class="hint" style="margin:8px 0">Taux annuels indicatifs, à vérifier et à remplacer par les tiens (taux réglementés du moment, rendement de tes contrats). Ils servent aux projections des objectifs et aux préconisations.</p>
+      <div class="scroll"><table class="rtable sup" id="supTable"></table></div>
+    </details>
   </section>
 
   <!-- PREVISIONNEL -->
@@ -490,8 +517,9 @@ dialog h2{font:400 23px var(--serif)}
   </div>
   <div class="frow">
     <label class="f">Point de départ<select id="gBase"><option value="res">Mon épargne actuelle (onglet Ressources)</option><option value="manuel">Un montant que je saisis</option></select></label>
-    <label class="f">Rendement annuel estimé (%)<input id="gRate" inputmode="decimal" placeholder="0"></label>
+    <label class="f">Placement<select id="gSupport"></select></label>
   </div>
+  <label class="f" id="gRateWrap">Rendement annuel estimé (%)<input id="gRate" inputmode="decimal" placeholder="0"></label>
   <label class="f" id="gStartWrap">Déjà constitué (€)<input id="gStart" inputmode="decimal" placeholder="0"></label>
   <label class="f">Alimenté par<select id="gLink"></select></label>
   <label class="f" id="gManualWrap">Versement mensuel prévu (€)<input id="gManual" inputmode="decimal" placeholder="0"></label>
@@ -593,7 +621,19 @@ const put = (c, id, data) => write(c, id, {op:'set', data});
 const del = (c, id) => write(c, id, {op:'del'});
 
 // ================= State =================
-const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[] };
+const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[], reglages:{taux:{}, marge:10} };
+const SUPPORTS = [
+  {id:'livret', nom:'Livret A / LDDS', taux:1.5, horizon:'0 à 2 ans', dispo:'Immédiate', plafond:'22 950 € + 12 000 €', fisc:'Exonéré', risque:'Aucun'},
+  {id:'lep', nom:'LEP (sous conditions de revenus)', taux:2.5, horizon:'0 à 2 ans', dispo:'Immédiate', plafond:'10 000 €', fisc:'Exonéré', risque:'Aucun'},
+  {id:'fe', nom:'Assurance-vie, fonds euros', taux:2.5, horizon:'2 à 8 ans', dispo:'Quelques jours', plafond:'Aucun', fisc:'Allégée après 8 ans', risque:'Faible'},
+  {id:'avuc', nom:'Assurance-vie, unités de compte', taux:5, horizon:'5 ans et plus', dispo:'Quelques jours', plafond:'Aucun', fisc:'Allégée après 8 ans', risque:'Capital non garanti'},
+  {id:'pea', nom:'PEA (actions)', taux:6, horizon:'5 ans et plus', dispo:'Retrait avant 5 ans pénalisant', plafond:'150 000 €', fisc:'IR exonéré après 5 ans (prélèvements sociaux dus)', risque:'Capital non garanti'},
+  {id:'per', nom:'PER', taux:5, horizon:'Retraite', dispo:'Bloqué jusqu\'à la retraite (sauf résidence principale)', plafond:'Selon revenus', fisc:'Versements déductibles', risque:'Selon supports'},
+  {id:'scpi', nom:'SCPI', taux:4.5, horizon:'8 ans et plus', dispo:'Revente lente', plafond:'Aucun', fisc:'Revenus fonciers', risque:'Capital non garanti'}
+];
+const supRate = id => { const t = S.reglages.taux && S.reglages.taux[id]; const d = SUPPORTS.find(x => x.id === id); return t != null ? num(t) : d ? d.taux : 0; };
+const supName = id => (SUPPORTS.find(x => x.id === id) || {}).nom || '';
+function goalRate(g){ return g.support && SUPPORTS.some(x => x.id === g.support) ? supRate(g.support) : num(g.rendement); }
 let tab = 'budget', month = THIS, donutMode = 'prevu';
 let typeFilter = 'tous', revSort = {f:null, dir:1}, depSort = {f:null, dir:1}, horizon = 12;
 const selected = new Set();
@@ -603,10 +643,11 @@ async function load(){
   try { if (window.claude && typeof window.claude.use === 'function') d = await window.claude.use('db'); } catch(e){}
   db = d || localDb(); mode = d ? 'cloud' : 'local';
   try {
-    const [rv, dp, rs, it, mo, ob] = await Promise.all([
+    const [rv, dp, rs, it, mo, ob, rg] = await Promise.all([
       db.collection('revenus').get(), db.collection('depenses').get(),
       db.collection('ressources').doc('main').get().catch(() => null),
-      db.collection('budget_items').get(), db.collection('budget_months').get(), db.collection('objectifs').get()
+      db.collection('budget_items').get(), db.collection('budget_months').get(), db.collection('objectifs').get(),
+      db.collection('reglages').doc('main').get().catch(() => null)
     ]);
     S.revenus = rv.docs.map(s => ({id:s.id, ...s.data()}));
     S.depenses = dp.docs.map(s => ({id:s.id, ...s.data()}));
@@ -614,6 +655,7 @@ async function load(){
     S.items = it.docs.map(s => ({id:s.id, ...s.data()}));
     mo.docs.forEach(s => { S.months[s.id] = {recs: (s.data() || {}).recs || {}}; });
     S.objectifs = ob.docs.map(s => ({id:s.id, ...s.data()}));
+    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10}; }
     setSave('À jour');
   } catch(e){
     setSave('Chargement impossible (' + ((e && e.code) || 'erreur') + '). Recharge la page.');
@@ -706,7 +748,7 @@ function goalStats(g){
   const cible = num(g.cible);
   const pmt = g.link && g.link !== 'none' ? items.reduce((a,i)=>a+monthlyOf(i),0) : num(g.manuel);
   const n = Math.max(0, idx(g.echeance) - idx(THIS));
-  const r = num(g.rendement)/100/12;
+  const rate = goalRate(g), r = rate/100/12;
   const fv = (k) => r ? actuel*Math.pow(1+r,k) + pmt*(Math.pow(1+r,k)-1)/r : actuel + pmt*k;
   const projete = fv(n);
   let besoin = 0;
@@ -716,9 +758,9 @@ function goalStats(g){
     besoin = Math.max(0, besoin);
   }
   let reach = null;
-  if (actuel >= cible) reach = 0; else if (pmt > 0 || r > 0) { for (let k = 1; k <= 600; k++){ if (fv(k) >= cible){ reach = k; break; } } }
-  const status = actuel >= cible ? 'atteint' : projete >= cible ? 'ok' : 'retard';
-  return {items, verse: fromRes ? 0 : verse, fromRes, actuel, cible, pmt, n, r, projete, besoin, reach, status, fv};
+  if (actuel >= cible) reach = 0; else if (pmt > 0 || r > 0) { for (let k = 1; k <= 600; k++){ if (fv(k) + 1 >= cible){ reach = k; break; } } }
+  const status = actuel >= cible ? 'atteint' : projete + 1 >= cible ? 'ok' : 'retard';
+  return {items, verse: fromRes ? 0 : verse, fromRes, actuel, cible, pmt, n, r, rate, projete, besoin, reach, status, fv};
 }
 function dur(n){ const y = Math.floor(n/12), m = n%12; return [y ? y+' an'+(y>1?'s':'') : '', m ? m+' mois' : ''].filter(Boolean).join(' ') || 'ce mois-ci'; }
 
@@ -963,7 +1005,124 @@ function renderDepenses(){
 }
 
 // ================= Render: objectifs =================
+// ================= Préconisations =================
+function suggestSupport(g, n){
+  if (g.type === 'precaution' || n < 24) return 'livret';
+  if (n < 60) return 'fe';
+  if (n < 96) return 'avuc';
+  return 'pea';
+}
+function reachWith(st, pmt){
+  if (st.actuel >= st.cible) return 0;
+  const r = st.r, f = k => r ? st.actuel*Math.pow(1+r,k) + pmt*(Math.pow(1+r,k)-1)/r : st.actuel + pmt*k;
+  if (pmt <= 0 && r <= 0) return null;
+  for (let k = 1; k <= 600; k++) if (f(k) >= st.cible) return k;
+  return null;
+}
+let lastReco = null;
+function computeReco(){
+  const {rows} = computeMonths();
+  const fut = rows.filter(r => r.n >= 1 && r.n <= 12);
+  const nets = fut.map(r => r.ent - r.dep);
+  const avg = nets.reduce((a,b)=>a+b,0) / (nets.length || 1);
+  const minNet = Math.min(...nets), minM = fut[nets.indexOf(minNet)];
+  const depAvg = fut.reduce((a,r)=>a+r.dep,0) / (fut.length || 1);
+  const entTot = fut.reduce((a,r)=>a+r.ent,0), proShare = entTot ? fut.reduce((a,r)=>a+r.entPro,0)/entTot : 0;
+  const precMonths = proShare > .3 ? 6 : 3;
+  const marge = num(S.reglages.marge ?? 10);
+  const capacity = Math.max(0, avg * (1 - marge/100));
+  const planned = S.items.filter(i => i.section === 'epa').reduce((a,i)=>a+monthlyOf(i),0);
+  const lowRows = rows.filter(r => r.n >= 0 && r.n <= 12);
+  const low = lowRows.reduce((a,r) => r.ccEnd < a.v ? {v:r.ccEnd, m:r.m} : a, {v:Infinity, m:null});
+  const goals = S.objectifs.map(g => ({g, st: goalStats(g)})).filter(x => x.st.status !== 'atteint' || x.g.type === 'precaution');
+  goals.sort((a,b) => (b.g.type === 'precaution') - (a.g.type === 'precaution') || idx(a.g.echeance) - idx(b.g.echeance));
+  let left = capacity;
+  goals.forEach(x => { x.alloc = Math.round(Math.min(x.st.besoin, left)); left -= x.alloc; x.sup = suggestSupport(x.g, x.st.n); x.reachAlloc = reachWith(x.st, x.alloc); });
+  const resCount = S.objectifs.filter(g => g.base === 'res').length;
+  return lastReco = {avg, minNet, minM, depAvg, proShare, precMonths, precTarget: depAvg * precMonths, marge, capacity, planned, low, goals, left: Math.max(0, left), resCount};
+}
+function renderReco(){
+  const R = computeReco();
+  const advice = [];
+  const empty = computeMonths().rows.filter(r => r.n >= 1 && r.n <= 12 && r.ent < 1).length;
+  if (empty >= 3) advice.push(['info', `${empty} des 12 prochains mois n'ont aucun revenu saisi. Si tes revenus pro reviennent régulièrement, ajoute un revenu récurrent estimé (par exemple ta moyenne de commissions) dans Revenus à venir ; sinon ta capacité d'épargne est sous-estimée.`]);
+  if (R.avg <= 0) advice.push(['bad', `Sur les 12 prochains mois, tes dépenses prévues dépassent tes entrées de ${fmt0(-R.avg)} par mois en moyenne. Avant d'épargner, réduis une charge ou ajoute les revenus qui manquent.`]);
+  else if (R.planned > R.capacity + 1) advice.push(['bad', `Tu prévois d'épargner ${fmt0(R.planned)} par mois alors que ta capacité, marge de sécurité déduite, est de ${fmt0(R.capacity)}. Réduis tes versements ou ton compte courant risque de baisser chaque mois.`]);
+  else advice.push(['good', `Tu peux épargner jusqu'à ${fmt0(R.capacity)} par mois (marge de ${R.marge} % gardée sur le compte courant). Tu en prévois ${fmt0(R.planned)} : il reste ${fmt0(R.capacity - R.planned)} par mois à placer.`]);
+  if (R.low.m && R.low.v < 0) advice.push(['bad', `Ton compte courant passe à ${fmt0(R.low.v)} en ${mName(R.low.m)}. Garde du disponible ou décale une dépense avant d'augmenter l'épargne.`]);
+  if (R.minNet < 0 && R.avg > 0) advice.push(['info', `Tes revenus varient : ${mName(R.minM.m)} est déficitaire (${fmt0(R.minNet)}). Des versements réguliers restent possibles, mais une épargne de précaution solide est prioritaire.`]);
+  if (R.resCount > 1) advice.push(['info', `${R.resCount} objectifs partent tous de ton épargne actuelle (Ressources) : elle est comptée plusieurs fois. Garde ce point de départ pour un seul objectif et saisis un montant pour les autres.`]);
+  const prec = S.objectifs.find(g => g.type === 'precaution');
+  const precTxt = prec ? '' : `<div class="advice info" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span>Épargne de précaution conseillée : <b>${fmt0(R.precTarget)}</b>, soit ${R.precMonths} mois de dépenses${R.precMonths === 6 ? ' (6 mois car une part importante de tes revenus est pro et variable)' : ''}. À garder sur un livret disponible immédiatement.</span><button class="btn" id="precBtn">Créer cet objectif</button></div>`;
+
+  const rows = R.goals.map(x => {
+    const st = x.st, ok = x.alloc + .5 >= st.besoin;
+    const res = st.status === 'atteint' ? '<span class="pill ok">Atteint</span>' : ok ? '<span class="pill ok">Atteint à temps</span>'
+      : x.reachAlloc == null ? '<span class="pill late">Hors de portée</span>' : `<span class="pill late">Atteint en ${mName(addM(THIS, x.reachAlloc))}</span>`;
+    const same = x.g.support === x.sup;
+    return `<tr><td><b>${esc(x.g.label)}</b><div class="hint">${fmt0(st.actuel)} / ${fmt0(st.cible)} · dans ${dur(st.n)}</div></td>
+      <td class="num" style="text-align:right">${fmt0(st.besoin)}</td>
+      <td class="num" style="text-align:right;font-weight:700">${fmt0(x.alloc)}</td>
+      <td class="num" style="text-align:right">${fmt0(st.pmt)}</td>
+      <td>${esc(supName(x.sup))}<div class="hint">${String(supRate(x.sup)).replace('.',',')} %/an${x.g.support && !same ? ' · actuel : ' + esc(supName(x.g.support)) : ''}</div></td>
+      <td>${res}</td>
+      <td>${st.status === 'atteint' || x.alloc < 1 ? '' : `<button class="btn" data-apply="${x.g.id}" title="Règle le versement mensuel sur ${fmt0(x.alloc)} et le placement conseillé">Appliquer</button>`}</td></tr>`;
+  }).join('');
+
+  const bySup = {};
+  R.goals.forEach(x => { if (x.alloc > 0) bySup[x.sup] = (bySup[x.sup] || 0) + x.alloc; });
+  if (R.left > 5) bySup['libre'] = R.left;
+  const maxA = Math.max(1, ...Object.values(bySup));
+  const allocHtml = Object.entries(bySup).map(([k,v]) => `<div class="row"><span>${k === 'libre' ? 'Non affecté (PEA ou assurance-vie long terme, ou avancer un objectif)' : esc(supName(k))}</span><div class="track"><div class="fill" style="width:${v/maxA*100}%;${k === 'libre' ? 'background:var(--gold)' : ''}"></div></div><b class="num" style="text-align:right">${fmt0(v)}/mois</b></div>`).join('');
+
+  $('reco').innerHTML = `<h3>Préconisations <span>calculées sur tes entrées et sorties des 12 prochains mois</span></h3>
+    <div class="reco-kpis num">
+      <div><small>Entrées − dépenses, moyenne mensuelle</small><b class="${R.avg < 0 ? 'neg' : ''}">${fmt0(R.avg)}</b></div>
+      <div><small>Mois le plus faible</small><b class="${R.minNet < 0 ? 'neg' : ''}">${fmt0(R.minNet)}</b></div>
+      <div><small>Capacité d'épargne conseillée</small><b style="color:var(--epa)">${fmt0(R.capacity)}</b></div>
+      <div><small>Épargne prévue au budget</small><b>${fmt0(R.planned)}</b></div>
+      <div><small>Marge de sécurité</small><b><select id="margeSel" class="btn" style="padding:3px 6px;font:inherit;font-size:16px">${[0,10,20,30].map(m => `<option value="${m}" ${m === R.marge ? 'selected' : ''}>${m} %</option>`).join('')}</select></b></div>
+    </div>
+    ${advice.map(([c,t]) => `<div class="advice ${c}">${t}</div>`).join('')}
+    ${precTxt}
+    ${R.goals.length ? `<div class="scroll"><table class="rtable" style="min-width:820px"><thead><tr><th>Objectif (par priorité)</th><th style="text-align:right">Nécessaire / mois</th><th style="text-align:right">Conseillé / mois</th><th style="text-align:right">Prévu / mois</th><th>Placement conseillé</th><th>Résultat avec le conseillé</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="sub" style="margin-top:14px;font-weight:700">Où placer chaque mois</div><div class="alloc num">${allocHtml || '<p class="hint">Rien à placer pour l\'instant.</p>'}</div>`
+      : '<p class="hint">Crée un objectif pour recevoir un montant et un placement conseillés.</p>'}
+    <p class="hint" style="margin-top:12px">Ordre de priorité : épargne de précaution, puis objectifs par échéance la plus proche. Placement selon l'horizon : moins de 2 ans livret, 2 à 5 ans fonds euros, 5 à 8 ans assurance-vie en unités de compte, au-delà PEA. Repères généraux calculés sur tes chiffres, pas un conseil personnalisé ; vérifie les taux et ta fiscalité (TMI pour le PER) avant d'agir.</p>`;
+  $('margeSel').onchange = e => { S.reglages.marge = +e.target.value; put('reglages', 'main', {...S.reglages}); renderAll(); };
+  const pb = $('precBtn'); if (pb) pb.onclick = createPrec;
+  renderSupTable();
+}
+function renderSupTable(){
+  $('supTable').innerHTML = `<thead><tr><th>Placement</th><th style="text-align:right">Taux %/an</th><th>Horizon</th><th>Disponibilité</th><th>Plafond</th><th>Fiscalité</th><th>Risque</th></tr></thead><tbody>` +
+    SUPPORTS.map(x => `<tr><td><b>${esc(x.nom)}</b></td><td style="text-align:right"><input inputmode="decimal" data-sup="${x.id}" value="${String(supRate(x.id)).replace('.',',')}" aria-label="Taux ${esc(x.nom)}"></td><td>${esc(x.horizon)}</td><td class="hint">${esc(x.dispo)}</td><td class="hint">${esc(x.plafond)}</td><td class="hint">${esc(x.fisc)}</td><td class="hint">${esc(x.risque)}</td></tr>`).join('') + '</tbody>';
+}
+function createPrec(){
+  const R = lastReco || computeReco();
+  const g = {id: uid(), debut: THIS, type:'precaution', label:'Épargne de précaution', cible: String(Math.round(R.precTarget/100)*100), echeance: addM(THIS, 12),
+    depart:'0', rendement:'0', support:'livret', link:'none', manuel:'0', base: S.objectifs.some(o => o.base === 'res') ? 'manuel' : 'res'};
+  S.objectifs.push(g); put('objectifs', g.id, body(g)); renderAll(); toast('Objectif « Épargne de précaution » créé');
+}
+function applyReco(gid){
+  const R = lastReco || computeReco(), x = R.goals.find(y => y.g.id === gid); if (!x) return;
+  const g = x.g, amt = Math.max(0, Math.round(x.alloc));
+  let it = g.link && g.link !== 'all' && g.link !== 'none' ? S.items.find(i => i.id === g.link) : null;
+  if (it){ it.amount = amt; }
+  else { it = {id: uid(), label: 'Épargne · ' + g.label, section:'epa', scope:'perso', type:'', amount: amt, freq:'mensuel', start: THIS, end: null, day: 5}; S.items.push(it); g.link = it.id; }
+  g.support = x.sup;
+  put('budget_items', it.id, body(it)); put('objectifs', g.id, body(g));
+  renderAll(); toast(`${fmt0(amt)} par mois sur « ${it.label} », placement : ${supName(x.sup)}`);
+}
+document.addEventListener('click', e => { const a = e.target.closest('[data-apply]'); if (a) applyReco(a.dataset.apply); });
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.dataset || !t.dataset.sup) return;
+  const v = parseNum(t.value); S.reglages.taux = {...S.reglages.taux, [t.dataset.sup]: v == null ? null : v};
+  if (v == null) delete S.reglages.taux[t.dataset.sup];
+  put('reglages', 'main', {...S.reglages}); renderAll(); toast('Taux mis à jour, projections recalculées');
+});
+
 function renderGoals(){
+  renderReco();
   recCard($('epaRec'), ['epa'], 'Versements d\'épargne', 'Les lignes qui alimentent tes objectifs. Coche « Versé ce mois » ici ou dans le Tableau de bord : c\'est la même case.');
   if (!S.objectifs.length){
     $('goals').innerHTML = `<div class="card"><h3>Aucun objectif</h3><p class="hint">Exemples : « Apport immobilier : 40 000 € en juin 2029 », « Capital 100 000 € dans 8 ans », « Épargne de précaution : 3 mois de dépenses ». Crée ton premier objectif avec le bouton ci-dessus.</p></div>`;
@@ -999,7 +1158,7 @@ function renderGoals(){
         <div><small>Atteint au rythme actuel</small><b>${reachTxt}</b></div>
       </div>
       ${svg}
-      <div class="bar-row"><span class="hint">Alimenté par : ${esc(src)}${num(g.rendement) ? ` · rendement ${String(g.rendement).replace('.',',')} %/an` : ''}${st.fromRes ? ' · départ : épargne de l\'onglet Ressources' : st.verse ? ` · ${fmt0(st.verse)} versés depuis ${mName(g.debut || THIS)}` : ''}</span><button class="btn" data-goal="${g.id}">Modifier</button></div>
+      <div class="bar-row"><span class="hint">Alimenté par : ${esc(src)}${g.support ? ` · ${esc(supName(g.support))}` : ''}${st.rate ? ` · ${String(st.rate).replace('.',',')} %/an` : ''}${st.fromRes ? ' · départ : épargne de l\'onglet Ressources' : st.verse ? ` · ${fmt0(st.verse)} versés depuis ${mName(g.debut || THIS)}` : ''}</span><button class="btn" data-goal="${g.id}">Modifier</button></div>
     </article>`;
   }).join('');
 }
@@ -1287,7 +1446,7 @@ armed($('iDelete'), 'Confirmer la suppression', () => {
 // ================= Goal dialog =================
 let editingGoal = null;
 function syncGoalForm(){
-  const l = $('gLink').value; $('gManualWrap').hidden = l !== 'none'; $('gStartWrap').hidden = $('gBase').value === 'res';
+  const l = $('gLink').value; $('gManualWrap').hidden = l !== 'none'; $('gRateWrap').hidden = !!$('gSupport').value; $('gStartWrap').hidden = $('gBase').value === 'res';
   $('gHint').textContent = ($('gBase').value === 'res' ? 'Le capital actuel suit l\'épargne indiquée dans Ressources : mets-la à jour et l\'objectif bouge avec. ' : '') + (l === 'none' ? 'Sans lien, la progression ne bouge que si tu modifies « Déjà constitué ». Relie plutôt l\'objectif à une ligne d\'épargne du tableau de bord.'
     : 'Le versement prévu de la ligne liée sert à la projection' + ($('gBase').value === 'res' ? '.' : ' ; chaque versement coché s\'ajoute au capital.'));
 }
@@ -1298,13 +1457,16 @@ function openGoal(id){
   $('gLink').innerHTML = `<option value="all">Toute l'épargne du budget (${ep.length} ligne${ep.length > 1 ? 's' : ''})</option>` + ep.map(i => `<option value="${i.id}">Ligne « ${esc(i.label)} » (${fmt0(monthlyOf(i))}/mois)</option>`).join('') + '<option value="none">Aucune, versement saisi à la main</option>';
   $('goalTitle').textContent = editingGoal ? 'Modifier l\'objectif' : 'Nouvel objectif';
   $('gBase').value = g.base || 'manuel'; $('gLabel').value = g.label; $('gTarget').value = g.cible; $('gDeadline').value = g.echeance; $('gStart').value = g.depart;
+  $('gSupport').innerHTML = '<option value="">Rendement personnalisé</option>' + SUPPORTS.map(x => `<option value="${x.id}">${esc(x.nom)} (${String(supRate(x.id)).replace('.',',')} %)</option>`).join('');
+  $('gSupport').value = g.support || '';
   $('gRate').value = g.rendement; $('gLink').value = g.link || 'none'; $('gManual').value = g.manuel || '';
   $('gDelete').hidden = !editingGoal; $('gDelete').classList.remove('armed'); $('gDelete').textContent = 'Supprimer';
   syncGoalForm(); $('dlgGoal').showModal(); $('gLabel').focus();
 }
 $('addGoal').onclick = () => openGoal(null);
+$('addPrec').onclick = () => { if (S.objectifs.some(g => g.type === 'precaution')) return toast('Tu as déjà un objectif d\'épargne de précaution'); createPrec(); };
 $('gLink').onchange = syncGoalForm;
-$('gBase').onchange = syncGoalForm;
+$('gBase').onchange = syncGoalForm; $('gSupport').onchange = syncGoalForm;
 $('gTarget').addEventListener('input', e => e.target.setCustomValidity(''));
 $('gDeadline').addEventListener('input', e => e.target.setCustomValidity(''));
 $('goalForm').addEventListener('submit', e => {
@@ -1313,7 +1475,7 @@ $('goalForm').addEventListener('submit', e => {
   if (!cible || cible <= 0){ $('gTarget').setCustomValidity('Indique le capital visé, par exemple 50000'); $('gTarget').reportValidity(); return; }
   if (idx($('gDeadline').value) < idx(THIS)){ $('gDeadline').setCustomValidity('Choisis une échéance à partir de ce mois'); $('gDeadline').reportValidity(); return; }
   const data = {label: $('gLabel').value.trim(), cible: String(cible), echeance: $('gDeadline').value, depart: String(parseNum($('gStart').value) || 0),
-    rendement: String(parseNum($('gRate').value) || 0), link: $('gLink').value, base: $('gBase').value, manuel: String(parseNum($('gManual').value) || 0)};
+    rendement: String(parseNum($('gRate').value) || 0), link: $('gLink').value, base: $('gBase').value, support: $('gSupport').value, manuel: String(parseNum($('gManual').value) || 0)};
   let g = editingGoal;
   if (g) Object.assign(g, data); else { g = {id: uid(), debut: THIS, ...data}; S.objectifs.push(g); }
   put('objectifs', g.id, body(g));
