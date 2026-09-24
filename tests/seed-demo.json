@@ -1,0 +1,177 @@
+{
+ "revenus": {
+  "r0": {
+   "libelle": "Client A - upfront",
+   "type": "pro",
+   "categorie": "",
+   "montant": "1500",
+   "statut": "avendre",
+   "date": "2026-10-05",
+   "note": ""
+  },
+  "r1": {
+   "libelle": "Client B - surcommission",
+   "type": "pro",
+   "categorie": "",
+   "montant": "900",
+   "statut": "avendre",
+   "date": "2026-11-16",
+   "note": ""
+  },
+  "r2": {
+   "libelle": "Vente perso",
+   "type": "perso",
+   "categorie": "",
+   "montant": "400",
+   "statut": "avendre",
+   "date": "2026-10-20",
+   "note": ""
+  },
+  "r3": {
+   "libelle": "Client C - upfront",
+   "type": "pro",
+   "categorie": "",
+   "montant": "2500",
+   "statut": "avendre",
+   "date": "2027-01-04",
+   "note": ""
+  }
+ },
+ "depenses": {
+  "d0": {
+   "libelle": "Crédit auto",
+   "categorie": "",
+   "montant": "300",
+   "recurrente": true,
+   "date": "2026-10-05",
+   "avancee": false,
+   "note": ""
+  },
+  "d1": {
+   "libelle": "Taxe foncière",
+   "categorie": "",
+   "montant": "800",
+   "recurrente": false,
+   "date": "2026-10-20",
+   "avancee": false,
+   "note": ""
+  },
+  "d2": {
+   "libelle": "Achat important",
+   "categorie": "",
+   "montant": "5000",
+   "recurrente": false,
+   "date": "2027-01-10",
+   "avancee": false,
+   "note": ""
+  }
+ },
+ "ressources": {
+  "main": {
+   "autres": "",
+   "cc": "3000",
+   "epargne": "0",
+   "livretA": "2000"
+  }
+ },
+ "objectifs": {
+  "g1": {
+   "label": "Achat important",
+   "cible": "5000",
+   "echeance": "2027-01",
+   "depart": "",
+   "debut": "2026-09"
+  },
+  "g2": {
+   "label": "Projet",
+   "cible": "20000",
+   "echeance": "2028-06",
+   "depart": "",
+   "debut": "2026-09"
+  }
+ },
+ "budget_items": {
+  "6kcpuauemufn1t9f": {
+   "amount": 400,
+   "day": null,
+   "end": null,
+   "freq": "ponctuel",
+   "label": "MAISON DE CAMPAGNE",
+   "scope": "perso",
+   "section": "var",
+   "start": "2026-10",
+   "type": "Plaisir"
+  },
+  "yg4kwzfwmufnj65k": {
+   "amount": 900,
+   "day": null,
+   "end": null,
+   "freq": "ponctuel",
+   "label": "LIVRET A",
+   "scope": "perso",
+   "section": "epa",
+   "start": "2026-10",
+   "type": ""
+  },
+  "enc": {
+   "label": "Encours trimestriel",
+   "section": "rev",
+   "scope": "pro",
+   "type": "",
+   "amount": 1800,
+   "freq": "trimestriel",
+   "start": "2026-10",
+   "end": null,
+   "day": 15
+  },
+  "lo": {
+   "label": "Loyer",
+   "section": "fix",
+   "scope": "perso",
+   "type": "Obligatoire",
+   "amount": 850,
+   "freq": "mensuel",
+   "start": "2026-09",
+   "end": null,
+   "day": 5
+  },
+  "co": {
+   "label": "Courses",
+   "section": "var",
+   "scope": "perso",
+   "type": "Obligatoire",
+   "amount": 350,
+   "freq": "mensuel",
+   "start": "2026-09",
+   "end": null,
+   "day": null
+  },
+  "nf": {
+   "label": "Netflix",
+   "section": "fix",
+   "scope": "perso",
+   "type": "Plaisir",
+   "amount": 14,
+   "freq": "mensuel",
+   "start": "2026-09",
+   "end": null,
+   "day": 12
+  },
+  "re": {
+   "label": "Restaurants",
+   "section": "var",
+   "scope": "perso",
+   "type": "Plaisir",
+   "amount": 250,
+   "freq": "mensuel",
+   "start": "2026-09",
+   "end": null,
+   "day": null
+  }
+ },
+ "budget_months": {
+  "2026-10": {
+   "recs": {}
+  }
+ }
+}

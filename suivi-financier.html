@@ -1501,6 +1501,7 @@ try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab')
 function rerenderKeepFocus(){ setTimeout(() => { const a = document.activeElement && document.activeElement.id; renderAll(); if (a){ const n = $(a); if (n && n.focus) n.focus(); } }, 0); }
 
 // ================= Dashboard events =================
+$('horizon').onchange = e => { horizon = +e.target.value || 12; renderAll(); toast(`Prévisionnel sur ${horizon} mois`); };
 $('prevM').onclick = () => { month = addM(month,-1); renderAll(); };
 $('nextM').onclick = () => { month = addM(month,1); renderAll(); };
 $('todayM').onclick = () => { month = THIS; renderAll(); };
