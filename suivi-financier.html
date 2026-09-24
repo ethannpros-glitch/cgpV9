@@ -288,6 +288,22 @@ tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-t
 .acc input{width:60px;border:1px solid var(--line);border-radius:7px;padding:3px 6px;text-align:right;background:var(--surface)}
 .goal .gap{font-size:12.5px;border-radius:9px;padding:8px 10px;background:var(--bad-soft);color:var(--bad)}
 .goal .ok{font-size:12.5px;border-radius:9px;padding:8px 10px;background:var(--good-soft);color:var(--good)}
+.flow{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:10px 0 6px}
+.flow div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}
+.flowleg{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px}
+.flowleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.steps{display:grid;gap:10px;counter-reset:st}
+.step{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.step::before{counter-increment:st;content:counter(st);width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:700}
+.step b.amt{font:400 22px var(--serif);white-space:nowrap}
+.step small{display:block;color:var(--muted);font-size:12px}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.vcol{border-radius:12px;padding:12px 14px;display:grid;gap:8px;align-content:start}
+.vcol h4{margin:0;font:400 19px var(--serif)}
+.vcol.keep{background:var(--good-soft)} .vcol.cut{background:var(--bad-soft)} .vcol.obj{background:var(--gold-soft)}
+.vitem{background:var(--surface);border-radius:9px;padding:8px 10px;font-size:12.5px}
+.vitem b{display:flex;justify-content:space-between;gap:8px}
+.eq{font-size:13px;background:var(--surface-2);border-radius:10px;padding:10px 14px}
 .chipdep{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;background:var(--fix-soft);color:var(--fix);border-radius:999px;padding:3px 10px}
 
 /* Ressources */
@@ -349,6 +365,7 @@ dialog h2{font:400 23px var(--serif)}
 
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="budget">Tableau de bord</button>
+    <button role="tab" data-tab="systeme">Mon système</button>
     <button role="tab" data-tab="revenus">Revenus à venir</button>
     <button role="tab" data-tab="depenses">Dépenses à venir</button>
     <button role="tab" data-tab="objectifs">Objectifs &amp; épargne</button>
@@ -408,6 +425,15 @@ dialog h2{font:400 23px var(--serif)}
       <div class="card"><h3>Ce qui reste à passer ce mois <span id="upCount"></span></h3><div class="list num" id="upcoming"></div></div>
       <div class="card"><h3>Mois suivants <span>solde net prévu, tout compris</span></h3><div class="chart" id="miniProj"></div><p class="hint" style="margin-top:8px">Détail complet dans l'onglet Prévisionnel.</p></div>
     </div>
+  </section>
+
+  <!-- MON SYSTEME -->
+  <section class="panel" id="p-systeme" hidden>
+    <div class="card" id="sysHead"></div>
+    <div class="card" id="sysFlow"></div>
+    <div class="card" id="sysAuto"></div>
+    <div class="card" id="sysCut"></div>
+    <div class="card" id="sysPro"></div>
   </section>
 
   <!-- REVENUS -->
@@ -641,7 +667,7 @@ const put = (c, id, data) => write(c, id, {op:'set', data});
 const del = (c, id) => write(c, id, {op:'del'});
 
 // ================= State =================
-const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[], reglages:{taux:{}, marge:10, mode:'regle', pct:20, prov:0} };
+const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[], reglages:{taux:{}, marge:10, mode:'lissage', pct:20, prov:28.5, salaire:0, reserve:3, pro:{}} };
 const ACC = [
   {id:'livretA', nom:'Livret A', plafond:22950, taux:1.5},
   {id:'ldds', nom:'LDDS', plafond:12000, taux:1.5},
@@ -676,7 +702,7 @@ async function load(){
     S.items = it.docs.map(s => ({id:s.id, ...s.data()}));
     mo.docs.forEach(s => { S.months[s.id] = {recs: (s.data() || {}).recs || {}}; });
     S.objectifs = ob.docs.map(s => ({id:s.id, ...s.data()}));
-    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10, mode: d.mode || 'regle', pct: d.pct ?? 20, prov: d.prov ?? 0}; }
+    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10, mode: d.mode || 'lissage', pct: d.pct ?? 20, prov: d.prov ?? 28.5, salaire: d.salaire ?? 0, reserve: d.reserve ?? 3, pro: d.pro || {}}; }
     setSave('À jour');
   } catch(e){
     setSave('Chargement impossible (' + ((e && e.code) || 'erreur') + '). Recharge la page.');
@@ -784,6 +810,14 @@ function buildPlan(){
   let free = bal.livretA + bal.ldds + bal.invest - goals.reduce((a,x)=>a+x.saved,0);
   goals.forEach(x => { if (free > 0){ const t = Math.min(free, Math.max(0, x.cible - x.saved)); x.saved += t; free -= t; } });
   const nowSaved = Object.fromEntries(goals.map(x => [x.id, x.saved]));
+  // Revenu lissé : moyenne des 12 prochains mois, net de la provision fiscale
+  let sumNet = 0;
+  for (let i = 0; i < 12; i++){ const L = baseLines(addM(THIS, i)); sumNet += L.rev.reduce((a,l)=>a+l.eff,0) - L.fix.filter(l => l.key === 'prov').reduce((a,l)=>a+l.eff,0); }
+  const salSug = Math.max(0, Math.floor(sumNet/12/50)*50);
+  const salaire = num(cfg.salaire) > 0 ? num(cfg.salaire) : salSug;
+  const kRes = num(cfg.reserve ?? 3);
+  let tre = num(S.ressources.cc) + num(S.ressources.autres);
+  const tre0 = tre;
   const end = Math.min(idx(THIS) + 120, Math.max(idx(THIS) + 25, ...goals.map(x => idx(x.dl) + 1)));
   const months = {};
   for (let i = idx(THIS); i <= end; i++){
@@ -793,7 +827,15 @@ function buildPlan(){
     const envies = all.filter(l => l.type === 'Plaisir').reduce((a,l)=>a+l.eff,0);
     const besoins = all.reduce((a,l)=>a+l.eff,0) - envies;
     const libre = R - besoins - envies;
-    const target = Math.max(0, Math.round(mode === 'regle' ? Math.min(R*pct/100, libre) : libre*(1 - marge/100)));
+    const prov = L.fix.filter(l => l.key === 'prov').reduce((a,l)=>a+l.eff,0);
+    let regular = 0, sweep = 0, target;
+    if (mode === 'lissage'){
+      // Tout encaissement passe par la réserve ; on se verse un salaire fixe ; au-delà de la réserve cible, le surplus part en épargne
+      tre += R - besoins - envies;
+      regular = Math.max(0, Math.min(salaire*pct/100, tre)); tre -= regular;
+      sweep = Math.max(0, tre - kRes*salaire); tre -= sweep;
+      target = Math.round(regular + sweep);
+    } else target = Math.max(0, Math.round(mode === 'regle' ? Math.min(R*pct/100, libre) : libre*(1 - marge/100)));
     const manual = L.epa.reduce((a,l)=>a+l.eff,0);
     const flows = {livretA:0, ldds:0, invest:0};
     L.epa.forEach(l => { const c = (l.ref && l.ref.compte) || 'livretA'; flows[c] += l.eff; });
@@ -806,6 +848,7 @@ function buildPlan(){
     for (const a in planBase){ const r = recs['plan:' + a]; const pv = r && r.prevu != null ? r.prevu : Math.round(planBase[a]); const re = r && r.reel != null ? r.reel : 0; planEff[a] = r && r.done ? re : Math.max(pv, re); }
     for (const a in bal) bal[a] += flows[a] + planEff[a];
     const saving = manual + planEff.livretA + planEff.ldds + planEff.invest;
+    if (mode === 'lissage') tre -= saving - target;
     // Répartition entre objectifs : d'abord le nécessaire de chacun (par priorité), puis le surplus
     let pot = saving; const alloc = {};
     const give = (x, a) => { a = Math.min(a, pot); if (a <= 0) return; x.saved += a; alloc[x.id] = (alloc[x.id] || 0) + a; pot -= a; };
@@ -822,7 +865,7 @@ function buildPlan(){
       if (!x.dep && i === idx(x.dl)) x.atDl = x.saved;
     });
     for (const a in bal) bal[a] *= 1 + accRate(a)/1200;
-    months[m] = {R, besoins, envies, libre, target, manual, planBase, planEff, acc: {livretA: flows.livretA + planEff.livretA, ldds: flows.ldds + planEff.ldds, invest: flows.invest + planEff.invest}, saving, alloc, unalloc: Math.max(0, pot), retrait, paid, bal:{...bal}};
+    months[m] = {R, prov, regular, sweep, tre, besoins, envies, libre, target, manual, planBase, planEff, acc: {livretA: flows.livretA + planEff.livretA, ldds: flows.ldds + planEff.ldds, invest: flows.invest + planEff.invest}, saving, alloc, unalloc: Math.max(0, pot), retrait, paid, bal:{...bal}};
   }
   goals.forEach(x => {
     if (x.atDl == null) x.atDl = x.saved;
@@ -834,7 +877,7 @@ function buildPlan(){
     x.next = (months[THIS] && months[THIS].alloc[x.id]) || 0;
     x.n = Math.max(0, idx(x.dl) - idx(THIS));
   });
-  return PLAN = {months, goals, mode, pct, marge, startBal};
+  return PLAN = {months, goals, mode, pct, marge, startBal, salaire, salSug, kRes, tre0};
 }
 const sumBal = b => b.livretA + b.ldds + b.invest;
 function dur(n){ const y = Math.floor(n/12), m = n%12; return [y ? y+' an'+(y>1?'s':'') : '', m ? m+' mois' : ''].filter(Boolean).join(' ') || 'ce mois-ci'; }
@@ -928,17 +971,18 @@ function renderKpis(t){
     return `<div class="minigoal"><div class="t"><span>${esc(x.label)}</span><b class="num">${Math.round(p*100)} %</b></div><div class="track"><div class="fill" style="width:${p*100}%"></div></div></div>`; }).join('');
 
   const k = donutMode, pctE = num(S.reglages.pct ?? 20);
-  const all = [...t.fix.lines, ...t.var.lines];
+  const lisM = S.reglages.mode === 'lissage';
+  const all = [...t.fix.lines, ...t.var.lines].filter(l => !(lisM && l.key === 'prov'));
   const env = all.filter(l => l.type === 'Plaisir').reduce((a,l)=>a+l[k],0);
-  const bes = all.reduce((a,l)=>a+l[k],0) - env, ep = t.epa[k];
-  const Rv = k === 'prevu' ? t.rev.eff : t.rev.reel;
+  const bes = all.reduce((a,l)=>a+l[k],0) - env, ep = lisM ? t.epa.lines.reduce((a,l)=>a+l[k],0) - (k === 'prevu' ? ((buildPlan().months[month] || {}).sweep || 0) : 0) : t.epa[k];
+  const Rv = lisM ? buildPlan().salaire : k === 'prevu' ? t.rev.eff : t.rev.reel;
   const rows = [['Besoins', bes, 50, 'var(--rev)', 'max'], ['Envies', env, 100 - 50 - pctE, 'var(--fix)', 'max'], ['Épargne', ep, pctE, 'var(--epa)', 'min']];
-  $('rule').innerHTML = Rv <= 0 ? '<p class="hint" style="text-align:center">Aucun revenu ce mois-ci : la règle se calcule sur ce que tu gagnes.</p>' : rows.map(([n,v,c,col,dir]) => {
+  $('rule').innerHTML = Rv <= 0 ? `<p class="hint" style="text-align:center">${lisM ? 'Salaire lissé à 0 € : saisis tes revenus attendus ou fixe ton salaire dans Mon système.' : 'Aucun revenu ce mois-ci : la règle se calcule sur ce que tu gagnes.'}</p>` : rows.map(([n,v,c,col,dir]) => {
     const p = v/Rv*100, bad = dir === 'max' ? p > c + .5 : p < c - .5;
     return `<div class="rrow"><div class="t"><span>${n}</span><b class="${bad ? 'neg' : 'pos'}">${Math.round(p)} % <small>${dir === 'max' ? 'max' : 'min'} ${c} %</small></b></div>
       <div class="track"><div class="fill" style="width:${Math.min(p,100)}%;background:${col}"></div><i style="left:${c}%"></i></div>
       <div class="hint">${fmt0(v)} sur ${fmt0(Rv*c/100)} ${dir === 'max' ? 'maximum' : 'conseillés'}</div></div>`;
-  }).join('') + `<p class="hint">Base : ${fmt0(Rv)} de revenus ${k === 'prevu' ? 'prévus' : 'encaissés'} ce mois.</p>`;
+  }).join('') + `<p class="hint">Base : ${lisM ? `ton salaire lissé de ${fmt0(Rv)} (hors provision URSSAF)` : `${fmt0(Rv)} de revenus ${k === 'prevu' ? 'prévus' : 'encaissés'} ce mois`}.</p>`;
   $('dPrevu').setAttribute('aria-pressed', k === 'prevu'); $('dReel').setAttribute('aria-pressed', k === 'reel');
 }
 function renderUpcoming(t){
@@ -1096,6 +1140,134 @@ function renderDepenses(){
   }));
 }
 
+// ================= Mon système : le cerveau =================
+const PRO_DEF = {encours:0, cible:17500000, taux:0.7, collecte:0, upfront:3, perf:3, annee:2030, plafond:77700};
+function proCfg(){ const p = S.reglages.pro || {}; const o = {}; for (const k in PRO_DEF) o[k] = p[k] != null && p[k] !== '' ? num(p[k]) : PRO_DEF[k]; return o; }
+function analyseLines(){
+  const agg = {};
+  for (let i = 0; i < 12; i++){
+    const m = addM(THIS, i), L = baseLines(m);
+    [...L.fix, ...L.var].forEach(l => {
+      if (l.key === 'prov') return;
+      const k = l.src + ':' + (l.ref && l.ref.id || l.key);
+      const a = agg[k] = agg[k] || {label:l.label, type:l.type, src:l.src, ref:l.ref, freq:l.freq, total:0, n:0, first:m};
+      a.total += l.eff; a.n++;
+    });
+  }
+  return Object.values(agg).map(a => ({...a, monthly: a.freq === 'mensuel' ? a.total/a.n : a.total/12}));
+}
+function renderSystem(){
+  const P = buildPlan(), ms = Object.entries(P.months).slice(0, 12).map(([m,v]) => ({m, ...v}));
+  const sum = k => ms.reduce((a,v)=>a+(v[k]||0),0);
+  const R12 = sum('R'), prov12 = sum('prov'), dep12 = sum('besoins') + sum('envies') - prov12, env12 = sum('envies'), reg12 = sum('regular'), sw12 = sum('saving') - reg12;
+  const cfg = S.reglages, lis = P.mode === 'lissage';
+  const depAvg = dep12/12, budgetDep = P.salaire*(1 - P.pct/100);
+  const curTre = P.tre0, resTarget = P.kRes*P.salaire;
+  const proRev = ms.reduce((a,v) => a + baseLines(v.m).rev.filter(l => l.scope === 'pro').reduce((x,l)=>x+l.eff,0), 0);
+
+  // 1. Diagnostic
+  const diag = [];
+  if (!num(cfg.prov)) diag.push(['bad', 'Aucune provision pour l\'URSSAF et l\'impôt : en micro-entreprise, chaque commission encaissée contient environ 25 à 30 % qui ne t\'appartiennent pas.']);
+  if (R12 < 1) diag.push(['bad', 'Aucun revenu prévu sur 12 mois : le système ne peut rien répartir. Saisis tes commissions attendues (surcommissions, upfront, encours trimestriel).']);
+  else if (depAvg > budgetDep + 1 && lis) diag.push(['bad', `Tes dépenses (${fmt0(depAvg)}/mois en moyenne) dépassent ton budget de vie (${fmt0(budgetDep)} = salaire − ${P.pct} % d'épargne). Il faut couper ${fmt0(depAvg - budgetDep)} par mois ou augmenter tes revenus.`]);
+  else if (lis) diag.push(['good', `Tes dépenses (${fmt0(depAvg)}/mois) tiennent dans ton budget de vie (${fmt0(budgetDep)}).`]);
+  if (lis && curTre < resTarget) diag.push(['info', `Réserve de lissage : ${fmt0(curTre)} aujourd'hui pour ${fmt0(resTarget)} visés (${P.kRes} mois de salaire). Tant qu'elle n'est pas pleine, seule l'épargne régulière (${P.pct} % du salaire) part vers tes comptes ; le reste la remplit.`]);
+  const empty = ms.filter(v => v.R < 1).length;
+  if (empty >= 3) diag.push(['info', `${empty} mois sur 12 sans aucun encaissement prévu. Ajoute tes encours trimestriels attendus (revenu récurrent « tous les 3 mois ») pour un plan réaliste.`]);
+  $('sysHead').innerHTML = `<h3>Mon système financier <span>chaque euro encaissé a un rôle</span></h3>
+    <div class="cfg" style="margin-bottom:12px">
+      <label>Méthode <select data-cfg="mode"><option value="lissage" ${lis ? 'selected' : ''}>Salaire lissé (conseillé : revenus irréguliers)</option><option value="regle" ${P.mode === 'regle' ? 'selected' : ''}>50/30/20 sur chaque mois</option><option value="max" ${P.mode === 'max' ? 'selected' : ''}>Tout ce qui reste</option></select></label>
+      <label title="Cotisations URSSAF micro-BNC + formation + versement libératoire">Provision URSSAF + impôt <input data-cfg="prov" inputmode="decimal" value="${num(cfg.prov)}"> % du pro</label>
+      ${lis ? `<label>Salaire versé <input data-cfg="salaire" inputmode="decimal" value="${num(cfg.salaire) || ''}" placeholder="${P.salSug}" style="width:80px"> €/mois</label><label>Réserve <input data-cfg="reserve" inputmode="decimal" value="${P.kRes}"> mois</label>` : ''}
+      <label>Épargne <input data-cfg="pct" inputmode="decimal" value="${P.pct}"> %</label>
+    </div>
+    <div class="reco-kpis num">
+      <div><small>Encaissements prévus, 12 mois</small><b>${fmt0(R12)}</b></div>
+      <div><small>Revenu lissé (net de provision)</small><b>${fmt0(P.salSug)}/mois</b></div>
+      <div><small>Salaire retenu</small><b>${fmt0(P.salaire)}/mois</b></div>
+      <div><small>Dépenses moyennes</small><b class="${depAvg > budgetDep + 1 && lis ? 'neg' : ''}">${fmt0(depAvg)}/mois</b></div>
+      <div><small>Réserve de lissage</small><b>${fmt0(curTre)} / ${fmt0(resTarget)}</b></div>
+    </div>
+    ${diag.map(([c,t]) => `<div class="advice ${c}">${t}</div>`).join('')}
+    <p class="hint">Taux de provision par défaut : 28,5 % (cotisations micro-BNC ≈ 26,1 % + formation 0,2 % + versement libératoire 2,2 %). Taux 2026 à vérifier sur autoentrepreneur.urssaf.fr selon ta caisse (SSI ou CIPAV) et ton option fiscale.</p>`;
+
+  // 2. Où va chaque euro
+  const parts = [['URSSAF et impôt', prov12, 'var(--gold)'], ['Dépenses de vie', dep12, 'var(--fix)'], ['Épargne régulière', lis ? reg12 : sum('saving'), 'var(--epa)'], ['Surplus vers objectifs', lis ? sw12 : 0, 'var(--rev)']];
+  const reserveVar = R12 - parts.reduce((a,p)=>a+p[1],0);
+  parts.push([reserveVar >= 0 ? 'Reste en réserve' : 'Pris sur la réserve', Math.abs(reserveVar), reserveVar >= 0 ? 'var(--var)' : 'var(--bad)']);
+  const base = Math.max(1, R12, parts.reduce((a,p)=>a+p[1],0));
+  const cur = P.months[THIS];
+  $('sysFlow').innerHTML = `<h3>Où va chaque euro <span>12 prochains mois</span></h3>
+    ${R12 > 0 ? `<div class="flow">${parts.filter(p => p[1] > 0).map(([n,v,c]) => `<div style="width:${v/base*100}%;background:${c}" title="${n} : ${fmt0(v)}">${v/base > .07 ? Math.round(v/R12*100) + ' %' : ''}</div>`).join('')}</div>
+    <div class="flowleg num">${parts.map(([n,v,c]) => `<span><i style="background:${c}"></i>${n} : <b>${fmt0(v)}</b>${R12 ? ` (${Math.round(v/R12*100)} €/100 €)` : ''}</span>`).join('')}</div>` : '<p class="hint">Aucun encaissement prévu.</p>'}
+    <div class="eq num" style="margin-top:12px"><b>Ce mois-ci</b> : ${fmt0(cur.R)} encaissés = ${fmt0(cur.prov)} provision + ${fmt0(cur.besoins + cur.envies - cur.prov)} dépenses + ${fmt0(cur.saving)} épargne ${(() => { const r = cur.R - cur.prov - (cur.besoins + cur.envies - cur.prov) - cur.saving; return r >= 0 ? '+ ' + fmt0(r) + ' en réserve' : '− ' + fmt0(-r) + ' pris sur la réserve'; })()}.</div>`;
+
+  // 3. Automatiser
+  const provM = Math.round(num(cfg.prov));
+  const regM = Math.round(P.salaire*P.pct/100);
+  $('sysAuto').innerHTML = `<h3>À automatiser <span>virements à programmer à ta banque</span></h3>
+    <div class="steps num">
+      <div class="step"><div><b>Un compte séparé « Réserve pro »</b><small>Tous tes encaissements (surcommissions, upfront, encours trimestriels) arrivent là, jamais sur ton compte courant.</small></div><b class="amt">100 %</b></div>
+      <div class="step"><div><b>À chaque encaissement : provision URSSAF et impôt</b><small>Virement vers un livret dédié, intouchable. Il paie tes déclarations URSSAF (mensuelles ou trimestrielles).</small></div><b class="amt">${provM} %</b></div>
+      ${lis ? `<div class="step"><div><b>Le 1er du mois : ton salaire</b><small>Virement permanent de la réserve vers ton compte courant. Toujours le même montant, que le mois ait été bon ou non.</small></div><b class="amt">${fmt0(P.salaire)}</b></div>
+      <div class="step"><div><b>Le 2 du mois : épargne automatique</b><small>Virement permanent du compte courant vers le Livret A, puis le LDDS une fois le Livret A plein.</small></div><b class="amt">${fmt0(regM)}</b></div>
+      <div class="step"><div><b>Chaque trimestre, après l'encours : le surplus</b><small>Si la réserve dépasse ${P.kRes} mois de salaire (${fmt0(resTarget)}), vire l'excédent vers tes objectifs, dans l'ordre de priorité de l'onglet Objectifs.</small></div><b class="amt">&gt; ${fmt0(resTarget)}</b></div>`
+      : `<div class="step"><div><b>Chaque mois : épargne</b><small>${P.pct} % des revenus du mois, vers Livret A puis LDDS.</small></div><b class="amt">${P.pct} %</b></div>`}
+    </div>
+    <p class="hint" style="margin-top:8px">Pourquoi ce schéma : avec des revenus irréguliers, dépenser au rythme des encaissements fait vivre au-dessus de ses moyens les bons mois et à découvert les mauvais. Le salaire fixe coupe ce lien.</p>`;
+
+  // 4. Couper / garder / financer
+  const lines = analyseLines();
+  const keep = [], cut = [], obj = [];
+  lines.forEach(a => {
+    const L = a.label.toLowerCase(), big = a.freq === 'ponctuel' && a.total >= Math.max(500, P.salaire*.3);
+    if (big && a.src === 'dep' && !S.objectifs.some(o => o.depense === 'd:' + a.ref.id)) obj.push({a, t:`Dépense ponctuelle de ${fmt0(a.total)} : épargne pour elle chaque mois au lieu de la payer d'un coup avec le compte courant.`, btn:`<button class="btn" data-mkgoal="${a.ref.id}" style="padding:4px 9px;font-size:12px">Épargner pour</button>`});
+    else if (big && a.src === 'budget') obj.push({a, t:`Dépense ponctuelle de ${fmt0(a.total)} : crée un objectif pour la préparer.`});
+    else if (a.type === 'Plaisir') cut.push({a, t: a.freq === 'ponctuel' ? `Envie ponctuelle : reporte-la si ta réserve n'est pas pleine.` : `Envie récurrente : ${fmt0(a.total)} par an. Réduis ou supprime-la si tu dépasses ton budget.`});
+    else if (/cr[ée]dit|pr[êe]t|emprunt/.test(L)) keep.push({a, t:'Garder, mais : délégation d\'assurance emprunteur (souvent l\'économie la plus rapide), et renégociation si ton taux dépasse nettement les taux actuels.'});
+    else if (/autre|divers|charges/.test(L)) keep.push({a, t:'Poste fourre-tout : détaille-le ligne par ligne. Les abonnements oubliés s\'y cachent souvent.', warn:true});
+    else if (/abonnement|netflix|spotify|prime|disney|canal|salle|sport|deezer|icloud/.test(L)) cut.push({a, t:'Abonnement : garde uniquement ceux utilisés chaque semaine.'});
+    else keep.push({a, t: a.freq === 'mensuel' ? 'Besoin récurrent : garder, comparer une fois par an (assurances, énergie, téléphone).' : 'Besoin : garder.'});
+  });
+  const over = lis ? Math.max(0, depAvg - budgetDep) : 0;
+  const item = x => `<div class="vitem"><b><span>${esc(x.a.label)}</span><span class="num">${x.a.freq === 'ponctuel' ? fmt0(x.a.total) : fmt0(x.a.monthly) + '/mois'}</span></b><span class="hint">${x.t}</span>${x.btn ? '<div style="margin-top:6px">' + x.btn + '</div>' : ''}</div>`;
+  $('sysCut').innerHTML = `<h3>Quoi garder, couper, financer autrement <span>${lines.length} postes analysés sur 12 mois</span></h3>
+    ${over ? `<div class="advice bad">Pour tenir ton budget de vie, il faut couper <b>${fmt0(over)}/mois</b>. Commence par les envies ci-dessous, les plus grosses d'abord.</div>` : ''}
+    ${lines.length < 5 ? `<div class="advice info">Seulement ${lines.length} poste${lines.length > 1 ? 's' : ''} de dépense saisi${lines.length > 1 ? 's' : ''}. Ajoute loyer, courses, transport, assurances, téléphone, abonnements, sorties (onglet Dépenses à venir ou Import rapide) : l'analyse ne peut juger que ce qu'elle voit.</div>` : ''}
+    <div class="verdicts">
+      <div class="vcol keep"><h4>Garder</h4>${keep.map(item).join('') || '<span class="hint">—</span>'}</div>
+      <div class="vcol cut"><h4>Challenger ou couper</h4>${cut.sort((a,b)=>b.a.total-a.a.total).map(item).join('') || '<span class="hint">Aucune envie saisie.</span>'}</div>
+      <div class="vcol obj"><h4>Financer par l'épargne</h4>${obj.map(item).join('') || '<span class="hint">Rien à signaler.</span>'}</div>
+    </div>`;
+
+  // 5. Trajectoire pro
+  const pc = proCfg(), y0 = +THIS.slice(0,4), years = Math.max(1, pc.annee - y0), g = pc.perf/100;
+  let e = pc.encours; const rows = [];
+  for (let y = 1; y <= years; y++){ e = e*(1+g) + pc.collecte; const ca = e*pc.taux/100 + pc.collecte*pc.upfront/100; rows.push({y: y0 + y, e, enc: e*pc.taux/100, up: pc.collecte*pc.upfront/100, ca}); }
+  const fac = Array.from({length: years}, (_, k) => Math.pow(1+g, k)).reduce((a,b)=>a+b,0);
+  const need = Math.max(0, (pc.cible - pc.encours*Math.pow(1+g, years))/fac);
+  const overY = rows.find(r => r.ca > pc.plafond);
+  const inp = (k, lab, w=90) => `<label>${lab} <input data-pro="${k}" inputmode="decimal" value="${(S.reglages.pro || {})[k] ?? ''}" placeholder="${PRO_DEF[k]}" style="width:${w}px"></label>`;
+  $('sysPro').innerHTML = `<h3>Trajectoire pro <span>objectif ${fmt0(pc.cible)} d'encours en ${pc.annee}</span></h3>
+    <div class="cfg" style="margin-bottom:12px">${inp('encours','Encours actuel (€)',110)}${inp('cible','Encours visé (€)',110)}${inp('annee','Année',60)}${inp('collecte','Collecte nette / an (€)',110)}${inp('taux','Rémunération sur encours (%)',60)}${inp('upfront','Upfront / surcommission sur la collecte (%)',60)}${inp('perf','Performance des supports (%/an)',60)}${inp('plafond','Plafond micro (€)',90)}</div>
+    <div class="reco-kpis num">
+      <div><small>Collecte nette nécessaire</small><b>${fmt0(need)}/an</b></div>
+      <div><small>Soit par mois</small><b>${fmt0(need/12)}</b></div>
+      <div><small>Rémunération sur encours visée</small><b>${fmt0(pc.cible*pc.taux/100)}/an</b></div>
+      <div><small>Collecte prévue</small><b class="${pc.collecte + 1 < need ? 'neg' : 'pos'}">${fmt0(pc.collecte)}/an</b></div>
+    </div>
+    ${pc.collecte + 1 < need ? `<div class="advice bad">Avec ${fmt0(pc.collecte)} de collecte par an, tu atteins ${fmt0(rows[rows.length-1].e)} d'encours en ${pc.annee}. Il faut ${fmt0(need)} par an pour ${fmt0(pc.cible)}.</div>` : `<div class="advice good">Ta collecte prévue suffit pour atteindre l'objectif.</div>`}
+    ${overY ? `<div class="advice info">En ${overY.y}, ton chiffre d'affaires estimé (${fmt0(overY.ca)}) dépasse le plafond de la micro-entreprise (${fmt0(pc.plafond)}, à vérifier). Anticipe dès maintenant le passage au régime réel ou en société (EURL, SASU) avec ton expert-comptable : cotisations, TVA et fiscalité changent.</div>` : ''}
+    <div class="scroll"><table class="mtable num" style="min-width:600px"><thead><tr><th>Année</th><th>Encours fin d'année</th><th>Revenus sur encours</th><th>Upfront sur collecte</th><th>Chiffre d'affaires estimé</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td>${r.y}</td><td>${fmt0(r.e)}</td><td>${fmt0(r.enc)}</td><td>${fmt0(r.up)}</td><td class="${r.ca > pc.plafond ? 'neg' : ''}">${fmt0(r.ca)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="hint" style="margin-top:8px">Projection simple : l'encours croît chaque année de la performance des supports plus ta collecte nette. Rémunération sur encours de 0,7 % par défaut (15 à 20 M€ donnent 105 à 140 k€). Ajuste avec les taux réels de ton nouveau cabinet. Revenus pro réalisés sur 12 mois dans ce tableau : ${fmt0(proRev)}.</p>`;
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.dataset || !t.dataset.pro) return;
+  const v = parseNum(t.value); S.reglages.pro = {...(S.reglages.pro || {})}; if (v == null) delete S.reglages.pro[t.dataset.pro]; else S.reglages.pro[t.dataset.pro] = v;
+  put('reglages', 'main', {...S.reglages}); renderAll();
+});
+
 // ================= Render: objectifs & plan =================
 function similarDep(g){
   const words = String(g.label || '').toLowerCase().split(/[^a-zà-ÿ0-9]+/).filter(w => w.length > 3);
@@ -1124,18 +1296,18 @@ function renderPlanCard(P){
   $('planCard').innerHTML = `
     <div class="bar-row"><h3 style="margin:0">Plan d'épargne</h3>
       <div class="cfg">
-        <label>Méthode <select data-cfg="mode"><option value="regle" ${P.mode === 'regle' ? 'selected' : ''}>Règle 50/30/20</option><option value="max" ${P.mode === 'max' ? 'selected' : ''}>Tout ce qui reste</option></select></label>
-        ${P.mode === 'regle' ? `<label>Part épargnée <input data-cfg="pct" inputmode="decimal" value="${P.pct}"> % des revenus</label>` : `<label>Garder sur le compte <input data-cfg="marge" inputmode="decimal" value="${P.marge}"> % du reste</label>`}
+        <label>Méthode <select data-cfg="mode"><option value="lissage" ${P.mode === 'lissage' ? 'selected' : ''}>Salaire lissé (revenus irréguliers)</option><option value="regle" ${P.mode === 'regle' ? 'selected' : ''}>Règle 50/30/20 sur chaque mois</option><option value="max" ${P.mode === 'max' ? 'selected' : ''}>Tout ce qui reste</option></select></label>
+        ${P.mode === 'lissage' ? `<label>Salaire <input data-cfg="salaire" inputmode="decimal" value="${num(cfg.salaire) || ''}" placeholder="${P.salSug}" style="width:80px"> €/mois</label><label>Épargne <input data-cfg="pct" inputmode="decimal" value="${P.pct}"> % du salaire</label><label>Réserve <input data-cfg="reserve" inputmode="decimal" value="${P.kRes}"> mois</label>` : P.mode === 'regle' ? `<label>Part épargnée <input data-cfg="pct" inputmode="decimal" value="${P.pct}"> % des revenus</label>` : `<label>Garder sur le compte <input data-cfg="marge" inputmode="decimal" value="${P.marge}"> % du reste</label>`}
         <label title="Pour les revenus pro non imposés à la source : impôts, cotisations">Provision impôts et cotisations <input data-cfg="prov" inputmode="decimal" value="${num(cfg.prov)}"> % des revenus pro</label>
       </div></div>
     <div class="plan-now num">
       <div><div class="eyebrow">À mettre de côté ${mName(THIS,{month:'long'})}</div><div class="big2">${fmt0(cur.saving)}</div>
-        <div class="hint">${cur.R > 0 ? `${P.mode === 'regle' ? P.pct + ' % de ' + fmt0(cur.R) + ' de revenus' : 'reste après dépenses, moins ' + P.marge + ' %'}${cur.libre < cur.R*P.pct/100 && P.mode === 'regle' ? `, limité à ce qui reste après tes dépenses (${fmt0(Math.max(0,cur.libre))})` : ''}` : 'Aucun revenu prévu ce mois-ci'}</div></div>
+        <div class="hint">${P.mode === 'lissage' ? `${fmt0(cur.regular)} d'épargne régulière (${P.pct} % du salaire de ${fmt0(P.salaire)})${cur.sweep >= 1 ? ` + ${fmt0(cur.sweep)} de surplus au-delà de ta réserve` : ''}` : cur.R > 0 ? `${P.mode === 'regle' ? P.pct + ' % de ' + fmt0(cur.R) + ' de revenus' : 'reste après dépenses, moins ' + P.marge + ' %'}${cur.libre < cur.R*P.pct/100 && P.mode === 'regle' ? `, limité à ce qui reste après tes dépenses (${fmt0(Math.max(0,cur.libre))})` : ''}` : 'Aucun revenu prévu ce mois-ci'}</div></div>
       <div class="split">${ACC.map(a => `<div><small>${a.nom}</small><b>${fmt0(cur.acc[a.id])}</b></div>`).join('')}</div>
     </div>
     ${advice.map(([c,t]) => `<div class="advice ${c}">${t}</div>`).join('')}
     <div class="scroll"><table class="mtable num" style="min-width:900px"><thead><tr><th>Mois</th><th>Revenus</th><th>Besoins</th><th>Envies</th><th>À épargner</th><th>Livret A</th><th>LDDS</th><th>Investi</th><th style="text-align:left">Ce que ça finance</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="hint" style="margin-top:10px">Chaque mois : ${P.mode === 'regle' ? `${P.pct} % des revenus prévus, sans dépasser ce qui reste après les dépenses` : 'tout ce qui reste après les dépenses, moins la marge'}. L'argent va sur le Livret A jusqu'à son plafond, puis le LDDS, puis l'investissement. Il finance les objectifs dans l'ordre de priorité (par défaut : précaution, puis échéance la plus proche ; bouton « Prioriser » pour changer). Ces versements apparaissent comme lignes « plan d'épargne » dans le Tableau de bord, où tu les coches comme le reste.</p>`;
+    <p class="hint" style="margin-top:10px">Chaque mois : ${P.mode === 'lissage' ? `tes encaissements alimentent une réserve ; tu te verses ${fmt0(P.salaire)} de salaire, dont ${P.pct} % épargnés ; tout ce qui dépasse ${P.kRes} mois de salaire en réserve part en épargne` : P.mode === 'regle' ? `${P.pct} % des revenus prévus, sans dépasser ce qui reste après les dépenses` : 'tout ce qui reste après les dépenses, moins la marge'}. L'argent va sur le Livret A jusqu'à son plafond, puis le LDDS, puis l'investissement. Il finance les objectifs dans l'ordre de priorité (par défaut : précaution, puis échéance la plus proche ; bouton « Prioriser » pour changer). Ces versements apparaissent comme lignes « plan d'épargne » dans le Tableau de bord, où tu les coches comme le reste.</p>`;
 }
 function renderAccCard(P){
   const in12 = P.months[addM(THIS, 11)] || P.months[THIS];
@@ -1305,7 +1477,7 @@ function renderRes(){
 }
 
 // ================= Tabs & global render =================
-const RENDER = {budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
+const RENDER = {systeme:renderSystem, budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
 function renderAll(){
   PLAN = null;
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
