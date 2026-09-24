@@ -264,6 +264,31 @@ tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-t
 .sup td input{width:70px;border:1px solid var(--line);border-radius:7px;padding:4px 6px;text-align:right;background:var(--surface-2)}
 .explain{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:12.5px;color:var(--ink-2)}
 .explain b{color:var(--ink)}
+.rule{display:grid;gap:10px;margin-top:10px}
+.rrow .t{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600}
+.rrow .t small{font-weight:500;color:var(--muted)}
+.rrow .track{position:relative;height:9px;border-radius:5px;background:var(--surface-2);margin-top:4px}
+.rrow .fill{height:100%;border-radius:5px}
+.rrow .track i{position:absolute;top:-3px;width:2px;height:15px;background:var(--ink-2);opacity:.55}
+.rrow .hint{font-size:11.5px;margin-top:2px}
+.plan-now{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:16px;align-items:center;background:var(--epa-soft);border-radius:12px;padding:16px 18px;margin:10px 0 14px}
+.plan-now .big2{font:400 40px/1 var(--serif);color:var(--epa)}
+.plan-now .split{display:flex;flex-wrap:wrap;gap:10px}
+.plan-now .split div{background:var(--surface);border-radius:10px;padding:8px 12px;min-width:120px}
+.plan-now .split small{display:block;color:var(--muted);font-size:11px}
+.plan-now .split b{font:400 20px var(--serif)}
+.cfg{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.cfg select,.cfg input{border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--surface-2);font-size:13px}
+.cfg input{width:64px;text-align:right}
+.acc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.acc > div{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.acc b{font:400 24px var(--serif)}
+.acc .track{height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+.acc .fill{height:100%;background:var(--epa)}
+.acc input{width:60px;border:1px solid var(--line);border-radius:7px;padding:3px 6px;text-align:right;background:var(--surface)}
+.goal .gap{font-size:12.5px;border-radius:9px;padding:8px 10px;background:var(--bad-soft);color:var(--bad)}
+.goal .ok{font-size:12.5px;border-radius:9px;padding:8px 10px;background:var(--good-soft);color:var(--good)}
+.chipdep{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;background:var(--fix-soft);color:var(--fix);border-radius:999px;padding:3px 10px}
 
 /* Ressources */
 .res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -351,8 +376,8 @@ dialog h2{font:400 23px var(--serif)}
       </div></details>
     <div class="kpis">
       <div class="card">
-        <div class="eyebrow" style="text-align:center">Répartition du budget</div>
-        <div class="donutbox"><svg viewBox="0 0 42 42" id="donut" role="img" aria-label="Répartition du budget"></svg><div class="legend" id="legend"></div></div>
+        <div class="eyebrow" style="text-align:center">Règle 50 / 30 / 20</div>
+        <div class="rule num" id="rule"></div>
         <div class="seg" role="group" aria-label="Base de calcul"><button id="dPrevu" aria-pressed="true">Prévu</button><button id="dReel" aria-pressed="false">Réel</button></div>
       </div>
       <div class="card">
@@ -419,9 +444,9 @@ dialog h2{font:400 23px var(--serif)}
     </div>
     <div class="grid"><table>
       <thead><tr>
-        <th class="sort" data-dsort="libelle">Libellé ↕</th><th>Catégorie</th>
+        <th class="sort" data-dsort="libelle">Libellé ↕</th><th>Catégorie</th><th>Nature</th>
         <th class="sort" data-dsort="montant" style="text-align:right">Montant ↕</th><th>Récurrence</th>
-        <th class="sort" data-dsort="date">Date ↕</th><th>Avancée</th><th>Payée</th><th>Note</th><th></th>
+        <th class="sort" data-dsort="date">Date ↕</th><th>Avancée</th><th>Payée</th><th>Objectif</th><th>Note</th><th></th>
       </tr></thead>
       <tbody id="depBody"></tbody>
     </table></div>
@@ -429,17 +454,14 @@ dialog h2{font:400 23px var(--serif)}
 
   <!-- OBJECTIFS -->
   <section class="panel" id="p-objectifs" hidden>
+    <div class="card" id="planCard"></div>
     <div class="bar-row">
-      <p class="hint">Un objectif suit un capital à atteindre à une date. Relie-le à une ligne d'épargne du tableau de bord (ou à toute ton épargne) : chaque versement coché s'ajoute à sa progression, et le versement prévu sert à estimer la date d'atteinte.</p>
+      <h3 class="serif" style="font-size:24px">Mes objectifs</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="addPrec">+ Épargne de précaution</button><button class="btn primary" id="addGoal">+ Nouvel objectif</button></div>
     </div>
-    <div class="card" id="reco"></div>
     <div class="goals" id="goals"></div>
+    <div class="card" id="accCard"></div>
     <div class="card" id="epaRec"></div>
-    <details class="card"><summary style="cursor:pointer;font:400 19px var(--serif)">Placements et rendements utilisés</summary>
-      <p class="hint" style="margin:8px 0">Taux annuels indicatifs, à vérifier et à remplacer par les tiens (taux réglementés du moment, rendement de tes contrats). Ils servent aux projections des objectifs et aux préconisations.</p>
-      <div class="scroll"><table class="rtable sup" id="supTable"></table></div>
-    </details>
   </section>
 
   <!-- PREVISIONNEL -->
@@ -463,11 +485,13 @@ dialog h2{font:400 23px var(--serif)}
 
   <!-- RESSOURCES -->
   <section class="panel" id="p-ressources" hidden>
-    <p class="hint">Ce que tu as aujourd'hui. Le compte courant et les autres liquidités servent de point de départ au prévisionnel. L'épargne sert de base à tes objectifs.</p>
+    <p class="hint">Ce que tu as aujourd'hui. Le compte courant et les autres liquidités servent de point de départ au prévisionnel. Livret A, LDDS et investissements sont le point de départ du plan d'épargne : ils sont répartis automatiquement entre tes objectifs.</p>
     <div class="res">
       <label>Compte courant (aujourd'hui)<input id="resCc" inputmode="decimal" placeholder="0" class="num"></label>
-      <label>Épargne<input id="resEpargne" inputmode="decimal" placeholder="0" class="num"></label>
       <label>Autres liquidités<input id="resAutres" inputmode="decimal" placeholder="0" class="num"></label>
+      <label>Livret A<input id="resLivretA" inputmode="decimal" placeholder="0" class="num"></label>
+      <label>LDDS<input id="resLdds" inputmode="decimal" placeholder="0" class="num"></label>
+      <label>Investissements (PEA, assurance-vie…)<input id="resInvest" inputmode="decimal" placeholder="0" class="num"></label>
     </div>
     <div class="stat2 dark"><small>Total des ressources</small><b id="resTotal" class="num">0 €</b><small id="resMaj"></small></div>
     <details class="card">
@@ -490,7 +514,8 @@ dialog h2{font:400 23px var(--serif)}
   </div>
   <div class="frow">
     <label class="f">Montant prévu (€)<input id="iAmount" inputmode="decimal" required placeholder="0,00"></label>
-    <label class="f" id="iTypeWrap">Nature<select id="iType"><option>Obligatoire</option><option>Plaisir</option></select></label>
+    <label class="f" id="iTypeWrap">Nature<select id="iType"><option value="Obligatoire">Besoin</option><option value="Plaisir">Envie</option></select></label>
+    <label class="f" id="iCompteWrap">Compte<select id="iCompte"><option value="livretA">Livret A</option><option value="ldds">LDDS</option><option value="invest">Investissement</option></select></label>
   </div>
   <div class="frow">
     <label class="f">Fréquence<select id="iFreq"><option value="mensuel">Tous les mois</option><option value="trimestriel">Tous les 3 mois</option><option value="annuel">Une fois par an</option><option value="ponctuel">Ponctuel (une fois)</option></select></label>
@@ -510,19 +535,13 @@ dialog h2{font:400 23px var(--serif)}
 <!-- Goal dialog -->
 <dialog id="dlgGoal"><form id="goalForm">
   <h2 id="goalTitle">Nouvel objectif</h2>
-  <label class="f">Nom<input id="gLabel" required maxlength="60" placeholder="ex. Apport immobilier, Capital 100 k€"></label>
+  <label class="f">Nom<input id="gLabel" required maxlength="60" placeholder="ex. Mariage, Apport immobilier"></label>
+  <label class="f">Sert à payer une dépense prévue ?<select id="gDep"></select></label>
   <div class="frow">
-    <label class="f">Capital visé (€)<input id="gTarget" inputmode="decimal" required placeholder="50 000"></label>
+    <label class="f">Montant visé (€)<input id="gTarget" inputmode="decimal" required placeholder="50 000"></label>
     <label class="f">À atteindre en<input id="gDeadline" type="month" required></label>
   </div>
-  <div class="frow">
-    <label class="f">Point de départ<select id="gBase"><option value="res">Mon épargne actuelle (onglet Ressources)</option><option value="manuel">Un montant que je saisis</option></select></label>
-    <label class="f">Placement<select id="gSupport"></select></label>
-  </div>
-  <label class="f" id="gRateWrap">Rendement annuel estimé (%)<input id="gRate" inputmode="decimal" placeholder="0"></label>
-  <label class="f" id="gStartWrap">Déjà constitué (€)<input id="gStart" inputmode="decimal" placeholder="0"></label>
-  <label class="f">Alimenté par<select id="gLink"></select></label>
-  <label class="f" id="gManualWrap">Versement mensuel prévu (€)<input id="gManual" inputmode="decimal" placeholder="0"></label>
+  <label class="f">Déjà mis de côté pour cet objectif (€, facultatif)<input id="gStart" inputmode="decimal" placeholder="Laisse vide : ton épargne actuelle est répartie automatiquement"></label>
   <p class="hint" id="gHint"></p>
   <div class="dact">
     <button type="button" class="btn danger" id="gDelete">Supprimer</button>
@@ -608,6 +627,7 @@ const pend = {};
 let saveMsg = '';
 function setSave(t){ saveMsg = t; $('saveState').textContent = (mode === 'local' ? 'Enregistré sur cet appareil uniquement · ' : '') + t; }
 function write(c, id, job){
+  PLAN = null;
   const k = c + '/' + id;
   const p = pend[k] = pend[k] || {chain: Promise.resolve(), timer: null, job: null};
   p.job = job; clearTimeout(p.timer); setSave('Enregistrement…');
@@ -621,19 +641,20 @@ const put = (c, id, data) => write(c, id, {op:'set', data});
 const del = (c, id) => write(c, id, {op:'del'});
 
 // ================= State =================
-const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[], reglages:{taux:{}, marge:10} };
-const SUPPORTS = [
-  {id:'livret', nom:'Livret A / LDDS', taux:1.5, horizon:'0 à 2 ans', dispo:'Immédiate', plafond:'22 950 € + 12 000 €', fisc:'Exonéré', risque:'Aucun'},
-  {id:'lep', nom:'LEP (sous conditions de revenus)', taux:2.5, horizon:'0 à 2 ans', dispo:'Immédiate', plafond:'10 000 €', fisc:'Exonéré', risque:'Aucun'},
-  {id:'fe', nom:'Assurance-vie, fonds euros', taux:2.5, horizon:'2 à 8 ans', dispo:'Quelques jours', plafond:'Aucun', fisc:'Allégée après 8 ans', risque:'Faible'},
-  {id:'avuc', nom:'Assurance-vie, unités de compte', taux:5, horizon:'5 ans et plus', dispo:'Quelques jours', plafond:'Aucun', fisc:'Allégée après 8 ans', risque:'Capital non garanti'},
-  {id:'pea', nom:'PEA (actions)', taux:6, horizon:'5 ans et plus', dispo:'Retrait avant 5 ans pénalisant', plafond:'150 000 €', fisc:'IR exonéré après 5 ans (prélèvements sociaux dus)', risque:'Capital non garanti'},
-  {id:'per', nom:'PER', taux:5, horizon:'Retraite', dispo:'Bloqué jusqu\'à la retraite (sauf résidence principale)', plafond:'Selon revenus', fisc:'Versements déductibles', risque:'Selon supports'},
-  {id:'scpi', nom:'SCPI', taux:4.5, horizon:'8 ans et plus', dispo:'Revente lente', plafond:'Aucun', fisc:'Revenus fonciers', risque:'Capital non garanti'}
+const S = { revenus:[], depenses:[], ressources:{cc:'',epargne:'',autres:'',maj:''}, items:[], months:{}, objectifs:[], reglages:{taux:{}, marge:10, mode:'regle', pct:20, prov:0} };
+const ACC = [
+  {id:'livretA', nom:'Livret A', plafond:22950, taux:1.5},
+  {id:'ldds', nom:'LDDS', plafond:12000, taux:1.5},
+  {id:'invest', nom:'Investissement (PEA, assurance-vie)', plafond:Infinity, taux:5}
 ];
-const supRate = id => { const t = S.reglages.taux && S.reglages.taux[id]; const d = SUPPORTS.find(x => x.id === id); return t != null ? num(t) : d ? d.taux : 0; };
-const supName = id => (SUPPORTS.find(x => x.id === id) || {}).nom || '';
-function goalRate(g){ return g.support && SUPPORTS.some(x => x.id === g.support) ? supRate(g.support) : num(g.rendement); }
+const accRate = id => { const t = (S.reglages.taux || {})[id]; return t != null ? num(t) : ACC.find(a => a.id === id).taux; };
+const accName = id => (ACC.find(a => a.id === id) || {}).nom || id;
+function resAcc(){
+  const r = S.ressources, a = {livretA:num(r.livretA), ldds:num(r.ldds), invest:num(r.invest)};
+  if (!r.livretA && !r.ldds && !r.invest && num(r.epargne)) a.livretA = num(r.epargne);
+  return a;
+}
+let PLAN = null;
 let tab = 'budget', month = THIS, donutMode = 'prevu';
 let typeFilter = 'tous', revSort = {f:null, dir:1}, depSort = {f:null, dir:1}, horizon = 12;
 const selected = new Set();
@@ -651,11 +672,11 @@ async function load(){
     ]);
     S.revenus = rv.docs.map(s => ({id:s.id, ...s.data()}));
     S.depenses = dp.docs.map(s => ({id:s.id, ...s.data()}));
-    if (rs && rs.exists){ const r = rs.data(); S.ressources = {cc:r.cc ?? '', epargne:r.epargne ?? '', autres:r.autres ?? '', maj:r.maj || ''}; }
+    if (rs && rs.exists){ const r = rs.data(); S.ressources = {cc:r.cc ?? '', epargne:r.epargne ?? '', autres:r.autres ?? '', livretA:r.livretA ?? '', ldds:r.ldds ?? '', invest:r.invest ?? '', maj:r.maj || ''}; }
     S.items = it.docs.map(s => ({id:s.id, ...s.data()}));
     mo.docs.forEach(s => { S.months[s.id] = {recs: (s.data() || {}).recs || {}}; });
     S.objectifs = ob.docs.map(s => ({id:s.id, ...s.data()}));
-    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10}; }
+    if (rg && rg.exists){ const d = rg.data() || {}; S.reglages = {taux: d.taux || {}, marge: d.marge ?? 10, mode: d.mode || 'regle', pct: d.pct ?? 20, prov: d.prov ?? 0}; }
     setSave('À jour');
   } catch(e){
     setSave('Chargement impossible (' + ((e && e.code) || 'erreur') + '). Recharge la page.');
@@ -684,7 +705,7 @@ function depOccurs(d, m){
   return k === m;
 }
 function mkLine(o){ o.reel = o.rawReel ?? 0; o.reste = o.done ? 0 : o.prevu - o.reel; o.eff = o.done ? o.reel : Math.max(o.prevu, o.reel); return o; }
-function monthLines(m){
+function baseLines(m){
   const recs = (S.months[m] && S.months[m].recs) || {};
   const out = {rev:[], fix:[], var:[], epa:[]};
   S.items.forEach(it => {
@@ -703,10 +724,31 @@ function monthLines(m){
     if (!depOccurs(d, m)) return;
     const r = recs['d:'+d.id] || {};
     out.fix.push(mkLine({key:'d:'+d.id, src:'dep', ref:d, label:d.libelle || 'Sans libellé', day: d.date ? +d.date.slice(8,10) : null,
-      scope: /pro/i.test(d.categorie || '') ? 'pro' : 'perso', type:'Obligatoire', freq: d.recurrente ? 'mensuel' : 'ponctuel',
+      scope: /pro/i.test(d.categorie || '') ? 'pro' : 'perso', type: d.nature === 'envie' ? 'Plaisir' : 'Obligatoire', freq: d.recurrente ? 'mensuel' : 'ponctuel',
       prevu: r.prevu ?? num(d.montant), override: r.prevu != null, rawReel: r.reel ?? null, done: !!r.done}));
   });
+  const pct = num(S.reglages.prov);
+  if (pct > 0){
+    const pro = out.rev.filter(l => l.scope === 'pro').reduce((a,l)=>a+l.eff,0);
+    if (pro > 0){ const r = recs.prov || {};
+      out.fix.push(mkLine({key:'prov', src:'prov', ref:null, label:'Provision impôts et cotisations', day:null, scope:'pro', type:'Obligatoire', freq:'calculé',
+        prevu: r.prevu ?? Math.round(pro*pct)/100, override: r.prevu != null, rawReel: r.reel ?? null, done: !!r.done})); }
+  }
   for (const s in out) out[s].sort((a,b) => (a.day ?? 99) - (b.day ?? 99) || a.label.localeCompare(b.label,'fr'));
+  return out;
+}
+function monthLines(m){
+  const out = baseLines(m);
+  const P = idx(m) >= idx(THIS) ? buildPlan().months[m] : null;
+  if (P){
+    const recs = (S.months[m] && S.months[m].recs) || {};
+    ACC.forEach(a => {
+      const base = Math.round(P.planBase[a.id]), r = recs['plan:' + a.id];
+      if (base < 1 && !r) return;
+      out.epa.push(mkLine({key:'plan:' + a.id, src:'plan', ref:a, label:a.nom, day:null, scope:'perso', type:'', freq:'plan',
+        prevu: r && r.prevu != null ? r.prevu : base, override: !!(r && r.prevu != null), rawReel: r && r.reel != null ? r.reel : null, done: !!(r && r.done)}));
+    });
+  }
   return out;
 }
 function totals(m){
@@ -725,54 +767,87 @@ function setRec(m, k, patch){
   put('budget_months', m, {recs: mo.recs});
 }
 
-// ================= Objectifs model =================
-function monthlyOf(it){
-  if (it.end && idx(it.end) < idx(THIS)) return 0;
-  const a = num(it.amount);
-  return it.freq === 'mensuel' ? a : it.freq === 'trimestriel' ? a/3 : it.freq === 'annuel' ? a/12 : 0;
+// ================= Plan d'épargne : un seul moteur pour objectifs, comptes et prévisionnel =================
+function depRef(ref){
+  if (!ref) return null;
+  if (ref.startsWith('d:')){ const d = S.depenses.find(x => x.id === ref.slice(2)); if (!d || !d.date) return null; return {ref, label:d.libelle || 'Dépense', m: d.avancee ? THIS : d.date.slice(0,7), amount:num(d.montant)}; }
+  if (ref.startsWith('b:')){ const it = S.items.find(x => x.id === ref.slice(2)); if (!it) return null; return {ref, label:it.label, m:it.start, amount:num(it.amount)}; }
+  return null;
 }
-function linkedItems(g){
-  const ep = S.items.filter(i => i.section === 'epa');
-  return g.link === 'all' ? ep : g.link && g.link !== 'none' ? ep.filter(i => i.id === g.link) : [];
-}
-function goalStats(g){
-  const items = linkedItems(g), ids = new Set(items.map(i => i.id));
-  let verse = 0;
-  const from = g.debut || THIS;
-  for (let i = idx(from); i <= idx(THIS); i++){
-    const recs = (S.months[mkey(i)] || {}).recs || {};
-    ids.forEach(id => { if (recs[id] && recs[id].reel != null) verse += recs[id].reel; });
+function buildPlan(){
+  if (PLAN) return PLAN;
+  const cfg = S.reglages, mode = cfg.mode || 'regle', pct = num(cfg.pct ?? 20), marge = num(cfg.marge ?? 10);
+  const bal = resAcc(), startBal = {...bal};
+  const goals = S.objectifs.map(g => { const d = depRef(g.depense); return {g, id:g.id, label:g.label, cible:num(g.cible), dl: d ? d.m : g.echeance, dep:d, saved:num(g.depart), reached:null, spent:false, atDl:null}; });
+  goals.sort((a,b) => (a.g.prio ?? 999) - (b.g.prio ?? 999) || (b.g.type === 'precaution') - (a.g.type === 'precaution') || idx(a.dl) - idx(b.dl));
+  // L'épargne déjà constituée est répartie entre les objectifs, par priorité
+  let free = bal.livretA + bal.ldds + bal.invest - goals.reduce((a,x)=>a+x.saved,0);
+  goals.forEach(x => { if (free > 0){ const t = Math.min(free, Math.max(0, x.cible - x.saved)); x.saved += t; free -= t; } });
+  const nowSaved = Object.fromEntries(goals.map(x => [x.id, x.saved]));
+  const end = Math.min(idx(THIS) + 120, Math.max(idx(THIS) + 25, ...goals.map(x => idx(x.dl) + 1)));
+  const months = {};
+  for (let i = idx(THIS); i <= end; i++){
+    const m = mkey(i), L = baseLines(m), recs = (S.months[m] || {}).recs || {};
+    const R = L.rev.reduce((a,l)=>a+l.eff,0);
+    const all = [...L.fix, ...L.var];
+    const envies = all.filter(l => l.type === 'Plaisir').reduce((a,l)=>a+l.eff,0);
+    const besoins = all.reduce((a,l)=>a+l.eff,0) - envies;
+    const libre = R - besoins - envies;
+    const target = Math.max(0, Math.round(mode === 'regle' ? Math.min(R*pct/100, libre) : libre*(1 - marge/100)));
+    const manual = L.epa.reduce((a,l)=>a+l.eff,0);
+    const flows = {livretA:0, ldds:0, invest:0};
+    L.epa.forEach(l => { const c = (l.ref && l.ref.compte) || 'livretA'; flows[c] += l.eff; });
+    // Livret A d'abord, puis LDDS, puis investissement
+    let rest = Math.max(0, target - manual);
+    const planBase = {livretA:0, ldds:0, invest:0};
+    for (const a of ['livretA','ldds']){ const room = Math.max(0, ACC.find(x => x.id === a).plafond - bal[a] - flows[a]); const x = Math.min(room, rest); planBase[a] = x; rest -= x; }
+    planBase.invest = rest;
+    const planEff = {};
+    for (const a in planBase){ const r = recs['plan:' + a]; const pv = r && r.prevu != null ? r.prevu : Math.round(planBase[a]); const re = r && r.reel != null ? r.reel : 0; planEff[a] = r && r.done ? re : Math.max(pv, re); }
+    for (const a in bal) bal[a] += flows[a] + planEff[a];
+    const saving = manual + planEff.livretA + planEff.ldds + planEff.invest;
+    // Répartition entre objectifs : d'abord le nécessaire de chacun (par priorité), puis le surplus
+    let pot = saving; const alloc = {};
+    const give = (x, a) => { a = Math.min(a, pot); if (a <= 0) return; x.saved += a; alloc[x.id] = (alloc[x.id] || 0) + a; pot -= a; };
+    goals.forEach(x => { if (x.spent || x.saved >= x.cible) return; const left = idx(x.dl) - i + (x.dep ? 0 : 1); if (left <= 0) return; give(x, (x.cible - x.saved)/left); });
+    goals.forEach(x => { if (x.spent || (x.dep && i >= idx(x.dl))) return; give(x, x.cible - x.saved); });
+    // Le mois d'une dépense liée, l'épargne de l'objectif la paie
+    let retrait = 0; const paid = [];
+    goals.forEach(x => {
+      if (x.dep && !x.spent && i === idx(x.dl)){
+        const amt = Math.min(x.saved, x.dep.amount); x.atDl = x.saved; x.spent = true; x.saved -= amt; retrait += amt; paid.push({label:x.label, dep:x.dep.label, amt});
+        let t = amt; for (const a of ['livretA','ldds','invest']){ const y = Math.min(t, bal[a]); bal[a] -= y; t -= y; }
+      }
+      if (x.reached == null && (x.spent ? x.atDl : x.saved) >= x.cible - 1) x.reached = m;
+      if (!x.dep && i === idx(x.dl)) x.atDl = x.saved;
+    });
+    for (const a in bal) bal[a] *= 1 + accRate(a)/1200;
+    months[m] = {R, besoins, envies, libre, target, manual, planBase, planEff, acc: {livretA: flows.livretA + planEff.livretA, ldds: flows.ldds + planEff.ldds, invest: flows.invest + planEff.invest}, saving, alloc, unalloc: Math.max(0, pot), retrait, paid, bal:{...bal}};
   }
-  const fromRes = g.base === 'res';
-  const actuel = fromRes ? num(S.ressources.epargne) : num(g.depart) + verse;
-  const cible = num(g.cible);
-  const pmt = g.link && g.link !== 'none' ? items.reduce((a,i)=>a+monthlyOf(i),0) : num(g.manuel);
-  const n = Math.max(0, idx(g.echeance) - idx(THIS));
-  const rate = goalRate(g), r = rate/100/12;
-  const fv = (k) => r ? actuel*Math.pow(1+r,k) + pmt*(Math.pow(1+r,k)-1)/r : actuel + pmt*k;
-  const projete = fv(n);
-  let besoin = 0;
-  if (cible > actuel){
-    if (n === 0) besoin = cible - actuel;
-    else besoin = r ? (cible - actuel*Math.pow(1+r,n)) * r / (Math.pow(1+r,n)-1) : (cible - actuel)/n;
-    besoin = Math.max(0, besoin);
-  }
-  let reach = null;
-  if (actuel >= cible) reach = 0; else if (pmt > 0 || r > 0) { for (let k = 1; k <= 600; k++){ if (fv(k) + 1 >= cible){ reach = k; break; } } }
-  const status = actuel >= cible ? 'atteint' : projete + 1 >= cible ? 'ok' : 'retard';
-  return {items, verse: fromRes ? 0 : verse, fromRes, actuel, cible, pmt, n, r, rate, projete, besoin, reach, status, fv};
+  goals.forEach(x => {
+    if (x.atDl == null) x.atDl = x.saved;
+    x.now = nowSaved[x.id];
+    x.status = x.now >= x.cible - 1 ? 'atteint' : x.reached && idx(x.reached) <= idx(x.dl) ? 'ok' : 'retard';
+    x.gap = Math.max(0, x.cible - x.atDl);
+    const ms = Object.entries(months).filter(([m]) => idx(m) < idx(x.dl) + (x.dep ? 0 : 1));
+    x.avg = ms.length ? ms.reduce((a,[,v]) => a + (v.alloc[x.id] || 0), 0) / ms.length : 0;
+    x.next = (months[THIS] && months[THIS].alloc[x.id]) || 0;
+    x.n = Math.max(0, idx(x.dl) - idx(THIS));
+  });
+  return PLAN = {months, goals, mode, pct, marge, startBal};
 }
+const sumBal = b => b.livretA + b.ldds + b.invest;
 function dur(n){ const y = Math.floor(n/12), m = n%12; return [y ? y+' an'+(y>1?'s':'') : '', m ? m+' mois' : ''].filter(Boolean).join(' ') || 'ce mois-ci'; }
 
 // ================= Render: header =================
-function totalRes(){ return num(S.ressources.cc) + num(S.ressources.epargne) + num(S.ressources.autres); }
+function totalRes(){ return num(S.ressources.cc) + num(S.ressources.autres) + sumBal(resAcc()); }
 function renderHero(){
   const {rows} = computeMonths(), cur = rows.find(r => r.n === 0);
   const dec = rows.find(r => r.m === THIS.slice(0,4) + '-12') || cur;
   $('hRes').textContent = fmt0(totalRes());
   const hf = $('hFin'); hf.textContent = fmt0(cur.ccEnd); hf.className = cur.ccEnd < 0 ? 'neg' : 'pos';
   $('hEpa').textContent = fmt0(dec.epaEnd);
-  const gs = S.objectifs.map(goalStats);
+  const gs = buildPlan().goals;
   $('hGoals').textContent = gs.length ? `${gs.filter(g => g.status !== 'retard').length} / ${gs.length}` : 'Aucun';
 }
 
@@ -791,8 +866,10 @@ function renderSection(s, T){
     const meta = [l.day ? 'le ' + l.day : '', l.src === 'rev' ? 'revenu daté' : l.src === 'dep' ? (l.freq === 'mensuel' ? 'dépense mensuelle' : 'dépense datée') : (l.freq !== 'mensuel' ? FREQ[l.freq] : '')].filter(Boolean).join(' · ');
     const tags = (l.scope === 'pro' ? '<span class="pill pro">Pro</span>' : '') + (l.type === 'Plaisir' ? '<span class="pill plaisir">Plaisir</span>' : '')
       + (l.src === 'rev' && l.statut === 'vendu' ? '<span class="pill vendu">Vendu</span>' : '') + (l.late ? '<span class="pill late">En retard</span>' : '');
-    const goal = s === 'epa' ? S.objectifs.filter(g => g.link === 'all' || g.link === l.key).map(g => '→ ' + esc(g.label)).join(', ') : '';
-    const label = l.src === 'budget'
+    const goal = '';
+    const label = l.src === 'plan' || l.src === 'prov'
+      ? `<button class="lbl" data-goto="objectifs" title="Réglages dans Objectifs &amp; épargne"><span class="name">${esc(l.label)}</span><span class="meta">${l.src === 'plan' ? 'plan d\'épargne' : num(S.reglages.prov) + ' % des revenus pro'}</span></button>`
+      : l.src === 'budget'
       ? `<button class="lbl" data-edit="${l.ref.id}" title="Modifier la ligne"><span class="name">${esc(l.label)}</span>${tags}${meta || goal ? `<span class="meta">${esc(meta)}${meta && goal ? ' · ' : ''}${goal}</span>` : ''}</button>`
       : `<button class="lbl" data-goto="${l.src === 'rev' ? 'revenus' : 'depenses'}" data-id="${l.ref.id}" title="Modifier dans l'onglet ${l.src === 'rev' ? 'Revenus' : 'Dépenses'}"><span class="name">${esc(l.label)}</span>${tags}<span class="meta">${esc(meta)}</span></button>`;
     const reelCell = l.src === 'rev' ? `<span class="ro num">${l.done ? numStr(l.reel) : '–'}</span>`
@@ -812,7 +889,14 @@ function renderSection(s, T){
       <tr class="sum num"><td></td><td>${fmt(T.prevu)}</td><td>${fmt(T.reel)}</td><td class="r">${fmt(T.reste)}</td><td></td></tr></thead>
       <tbody>${rows || '<tr class="empty"><td colspan="5">Aucune ligne ce mois-ci</td></tr>'}</tbody>
     </table></div>
+    ${s === 'epa' ? fundedNote(month) : ''}
     <button class="add" data-add="${s}">+ Ajouter ${s === 'rev' ? 'un revenu récurrent' : s === 'epa' ? 'une épargne' : s === 'fix' ? 'une charge' : 'un poste variable'}</button>`;
+}
+function fundedNote(m){
+  const P = idx(m) >= idx(THIS) ? buildPlan().months[m] : null; if (!P) return '';
+  const f = Object.entries(P.alloc).filter(([,v]) => v >= 1).map(([id,v]) => { const g = S.objectifs.find(o => o.id === id); return g ? `${esc(g.label)} ${fmt0(v)}` : ''; }).filter(Boolean);
+  const paid = P.paid.map(p => `${esc(p.dep)} payé avec ${fmt0(p.amt)} d'épargne`);
+  return f.length || paid.length ? `<p class="hint" style="padding:8px 14px 0">${f.length ? 'Finance ce mois : ' + f.join(' · ') : ''}${f.length && paid.length ? '<br>' : ''}${paid.join(' · ')}</p>` : '';
 }
 function renderKpis(t){
   const out = ['fix','var','epa'];
@@ -840,21 +924,21 @@ function renderKpis(t){
 
   $('epaTot').textContent = fmt(t.epa.reel);
   $('epaNote').textContent = t.epa.eff === 0 ? 'Aucune épargne prévue ce mois' : t.epa.reel >= t.epa.eff ? 'Objectif du mois atteint' : `Prévu ce mois : ${fmt(t.epa.eff)}`;
-  $('miniGoals').innerHTML = S.objectifs.slice(0,3).map(g => { const st = goalStats(g); const p = st.cible ? Math.min(1, st.actuel/st.cible) : 0;
-    return `<div class="minigoal"><div class="t"><span>${esc(g.label)}</span><b class="num">${Math.round(p*100)} %</b></div><div class="track"><div class="fill" style="width:${p*100}%"></div></div></div>`; }).join('');
+  $('miniGoals').innerHTML = buildPlan().goals.slice(0,3).map(x => { const p = x.cible ? Math.min(1, x.now/x.cible) : 0;
+    return `<div class="minigoal"><div class="t"><span>${esc(x.label)}</span><b class="num">${Math.round(p*100)} %</b></div><div class="track"><div class="fill" style="width:${p*100}%"></div></div></div>`; }).join('');
 
-  const k = donutMode;
-  const sumT = type => ['fix','var'].reduce((a,s)=>a+t[s].lines.filter(l => (l.type || 'Obligatoire') === type).reduce((b,l)=>b+l[k],0),0);
-  const parts = [{n:'Obligatoire', v:sumT('Obligatoire'), c:'var(--rev)'}, {n:'Plaisir', v:sumT('Plaisir'), c:'var(--fix)'}, {n:'Épargne', v:t.epa[k], c:'var(--epa)'}];
-  const used = parts.reduce((a,p)=>a+p.v,0), rev = k === 'prevu' ? t.rev.prevu : t.rev.reel;
-  parts.push({n:'Non affecté', v:Math.max(0, rev - used), c:'var(--free)'});
-  const total = parts.reduce((a,p)=>a+p.v,0);
-  let off = 25, svg = '<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-2)" stroke-width="5.5"/>';
-  if (total > 0) parts.forEach(p => { const pct = p.v/total*100; if (pct <= 0) return;
-    svg += `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${p.c}" stroke-width="5.5" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${off}"><title>${p.n} : ${fmt(p.v)}</title></circle>`; off -= pct; });
-  svg += `<text x="21" y="22.4" text-anchor="middle" font-size="4.4" fill="var(--ink)" font-family="DM Serif Display,Georgia,serif">${fmt0(rev)}</text><text x="21" y="26.8" text-anchor="middle" font-size="2.5" fill="var(--muted)" font-family="Manrope,sans-serif">de revenus</text>`;
-  $('donut').innerHTML = svg;
-  $('legend').innerHTML = parts.map(p => `<div><i style="background:${p.c}"></i><span>${p.n}</span><b class="num">${total > 0 ? (p.v/total*100).toFixed(1).replace('.',',') : '0'} %</b></div>`).join('');
+  const k = donutMode, pctE = num(S.reglages.pct ?? 20);
+  const all = [...t.fix.lines, ...t.var.lines];
+  const env = all.filter(l => l.type === 'Plaisir').reduce((a,l)=>a+l[k],0);
+  const bes = all.reduce((a,l)=>a+l[k],0) - env, ep = t.epa[k];
+  const Rv = k === 'prevu' ? t.rev.eff : t.rev.reel;
+  const rows = [['Besoins', bes, 50, 'var(--rev)', 'max'], ['Envies', env, 100 - 50 - pctE, 'var(--fix)', 'max'], ['Épargne', ep, pctE, 'var(--epa)', 'min']];
+  $('rule').innerHTML = Rv <= 0 ? '<p class="hint" style="text-align:center">Aucun revenu ce mois-ci : la règle se calcule sur ce que tu gagnes.</p>' : rows.map(([n,v,c,col,dir]) => {
+    const p = v/Rv*100, bad = dir === 'max' ? p > c + .5 : p < c - .5;
+    return `<div class="rrow"><div class="t"><span>${n}</span><b class="${bad ? 'neg' : 'pos'}">${Math.round(p)} % <small>${dir === 'max' ? 'max' : 'min'} ${c} %</small></b></div>
+      <div class="track"><div class="fill" style="width:${Math.min(p,100)}%;background:${col}"></div><i style="left:${c}%"></i></div>
+      <div class="hint">${fmt0(v)} sur ${fmt0(Rv*c/100)} ${dir === 'max' ? 'maximum' : 'conseillés'}</div></div>`;
+  }).join('') + `<p class="hint">Base : ${fmt0(Rv)} de revenus ${k === 'prevu' ? 'prévus' : 'encaissés'} ce mois.</p>`;
   $('dPrevu').setAttribute('aria-pressed', k === 'prevu'); $('dReel').setAttribute('aria-pressed', k === 'reel');
 }
 function renderUpcoming(t){
@@ -870,7 +954,7 @@ function renderUpcoming(t){
   }).join('') || '<p class="hint">Tout est passé pour ce mois.</p>';
 }
 function renderMiniProj(){
-  const data = []; for (let n = 1; n <= 6; n++){ const m = addM(month,n), t = totals(m); data.push({m, net: t.rev.eff - t.fix.eff - t.var.eff - t.epa.eff}); }
+  const data = []; for (let n = 1; n <= 6; n++){ const m = addM(month,n), t = totals(m); const pm = buildPlan().months[m]; data.push({m, net: t.rev.eff - t.fix.eff - t.var.eff - t.epa.eff + (pm ? pm.retrait : 0)}); }
   $('miniProj').innerHTML = barsSvg(data.map(d => ({label: mShort(d.m), v: d.net, title: `${mName(d.m)} : ${fmt(d.net)}`})), 520, 170);
 }
 function barsSvg(data, W, H){
@@ -894,7 +978,7 @@ function recCard(el, secs, title, hint){
   const recs = (S.months[THIS] || {}).recs || {};
   const rows = its.map(it => {
     const on = occurs(it, THIS), r = recs[it.id] || {};
-    const linked = it.section === 'epa' ? S.objectifs.filter(g => g.link === 'all' || g.link === it.id).map(g => esc(g.label)).join(', ') : '';
+    const linked = it.section === 'epa' ? accName(it.compte || 'livretA') : '';
     return `<tr><td><button class="lbl" data-edit="${it.id}" title="Modifier"><span class="name">${esc(it.label)}</span>${it.scope === 'pro' ? '<span class="pill pro">Pro</span>' : ''}${it.type === 'Plaisir' ? '<span class="pill plaisir">Plaisir</span>' : ''}${linked ? `<span class="meta">→ ${linked}</span>` : ''}</button></td>
       <td>${SECNAME[it.section]}</td><td class="num" style="text-align:right;font-weight:700">${fmt(num(it.amount))}</td>
       <td>${FREQ[it.freq]}${it.day ? ' · le ' + it.day : ''}</td>
@@ -981,6 +1065,12 @@ function paidCell(l){
   const r = ((S.months[m] || {}).recs || {})['d:' + l.id] || {};
   return `<label class="chk" title="${l.recurrente ? 'Payée ce mois-ci' : 'Payée (' + mName(m) + ')'}"><input type="checkbox" data-dpaid="${l.id}" data-m="${m}" ${r.done ? 'checked' : ''}> ${l.recurrente ? 'ce mois' : mName(m,{month:'short'})}</label>`;
 }
+function goalCell(l){
+  const g = S.objectifs.find(o => o.depense === 'd:' + l.id);
+  if (g) return `<button class="chipdep" data-goto="objectifs" title="Épargne dédiée">${esc(g.label)}</button>`;
+  if (l.recurrente || !l.date || l.date.slice(0,7) <= THIS || !num(l.montant)) return '<span class="hint">—</span>';
+  return `<button class="btn" data-mkgoal="${l.id}" style="padding:4px 9px;font-size:12px" title="Mettre de côté chaque mois pour payer cette dépense avec ton épargne">Épargner pour</button>`;
+}
 function depMonth(d){ return d.recurrente || d.avancee ? THIS : (d.date ? d.date.slice(0,7) : null); }
 function renderDepenses(){
   renderDepStats();
@@ -990,184 +1080,141 @@ function renderDepenses(){
     <tr data-did="${l.id}">
       <td><input type="text" data-df="libelle" value="${esc(l.libelle)}" placeholder="Ex : Loyer bureau, assurance"></td>
       <td><input type="text" data-df="categorie" value="${esc(l.categorie)}" placeholder="Fixe, pro, perso…"></td>
+      <td><select data-df="nature" class="${l.nature === 'envie' ? 'pro' : 'perso'}"><option value="besoin" ${l.nature !== 'envie' ? 'selected' : ''}>Besoin</option><option value="envie" ${l.nature === 'envie' ? 'selected' : ''}>Envie</option></select></td>
       <td style="text-align:right"><input type="text" inputmode="decimal" class="amt num" data-df="montant" value="${esc(l.montant)}" placeholder="0"></td>
       <td><label class="chk"><input type="checkbox" data-df="recurrente" ${l.recurrente ? 'checked' : ''}> Mensuelle</label></td>
       <td><input type="date" data-df="date" value="${esc(l.date || '')}" title="Mensuelle : mois de démarrage. Ponctuelle : date de la dépense."></td>
       <td><label class="chk" title="Compter dans le mois en cours"><input type="checkbox" data-df="avancee" ${l.avancee ? 'checked' : ''} ${l.recurrente ? 'disabled' : ''}> Ce mois</label></td>
       <td>${paidCell(l)}</td>
+      <td>${goalCell(l)}</td>
       <td><input type="text" data-df="note" value="${esc(l.note)}" placeholder="—"></td>
       <td><button class="x" data-ddel="${l.id}" aria-label="Supprimer">×</button></td>
-    </tr>`).join('') || '<tr><td colspan="9" class="hint" style="text-align:center;padding:30px">Aucune dépense. Ajoute-en une ou utilise l\'import rapide.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="11" class="hint" style="text-align:center;padding:30px">Aucune dépense. Ajoute-en une ou utilise l\'import rapide.</td></tr>';
   document.querySelectorAll('[data-dsort]').forEach(th => th.style.color = th.dataset.dsort === depSort.f ? 'var(--gold)' : '');
   $('depBody').querySelectorAll('[data-ddel]').forEach(b => armed(b, 'Supprimer ?', () => {
     const id = b.dataset.ddel; S.depenses = S.depenses.filter(l => l.id !== id); del('depenses', id); renderDepenses(); renderHero(); toast('Dépense supprimée');
   }));
 }
 
-// ================= Render: objectifs =================
-// ================= Préconisations =================
-function suggestSupport(g, n){
-  if (g.type === 'precaution' || n < 24) return 'livret';
-  if (n < 60) return 'fe';
-  if (n < 96) return 'avuc';
-  return 'pea';
+// ================= Render: objectifs & plan =================
+function similarDep(g){
+  const words = String(g.label || '').toLowerCase().split(/[^a-zà-ÿ0-9]+/).filter(w => w.length > 3);
+  return S.depenses.find(d => !d.recurrente && d.date && d.date.slice(0,7) >= THIS && !S.objectifs.some(o => o.depense === 'd:' + d.id)
+    && (words.some(w => String(d.libelle || '').toLowerCase().includes(w)) || (num(d.montant) && num(d.montant) === num(g.cible))));
 }
-function reachWith(st, pmt){
-  if (st.actuel >= st.cible) return 0;
-  const r = st.r, f = k => r ? st.actuel*Math.pow(1+r,k) + pmt*(Math.pow(1+r,k)-1)/r : st.actuel + pmt*k;
-  if (pmt <= 0 && r <= 0) return null;
-  for (let k = 1; k <= 600; k++) if (f(k) >= st.cible) return k;
-  return null;
-}
-let lastReco = null;
-function computeReco(){
-  const {rows} = computeMonths();
-  const fut = rows.filter(r => r.n >= 1 && r.n <= 12);
-  const nets = fut.map(r => r.ent - r.dep);
-  const avg = nets.reduce((a,b)=>a+b,0) / (nets.length || 1);
-  const minNet = Math.min(...nets), minM = fut[nets.indexOf(minNet)];
-  const depAvg = fut.reduce((a,r)=>a+r.dep,0) / (fut.length || 1);
-  const entTot = fut.reduce((a,r)=>a+r.ent,0), proShare = entTot ? fut.reduce((a,r)=>a+r.entPro,0)/entTot : 0;
-  const precMonths = proShare > .3 ? 6 : 3;
-  const marge = num(S.reglages.marge ?? 10);
-  const capacity = Math.max(0, avg * (1 - marge/100));
-  const planned = S.items.filter(i => i.section === 'epa').reduce((a,i)=>a+monthlyOf(i),0);
-  const lowRows = rows.filter(r => r.n >= 0 && r.n <= 12);
-  const low = lowRows.reduce((a,r) => r.ccEnd < a.v ? {v:r.ccEnd, m:r.m} : a, {v:Infinity, m:null});
-  const goals = S.objectifs.map(g => ({g, st: goalStats(g)})).filter(x => x.st.status !== 'atteint' || x.g.type === 'precaution');
-  goals.sort((a,b) => (b.g.type === 'precaution') - (a.g.type === 'precaution') || idx(a.g.echeance) - idx(b.g.echeance));
-  let left = capacity;
-  goals.forEach(x => { x.alloc = Math.round(Math.min(x.st.besoin, left)); left -= x.alloc; x.sup = suggestSupport(x.g, x.st.n); x.reachAlloc = reachWith(x.st, x.alloc); });
-  const resCount = S.objectifs.filter(g => g.base === 'res').length;
-  return lastReco = {avg, minNet, minM, depAvg, proShare, precMonths, precTarget: depAvg * precMonths, marge, capacity, planned, low, goals, left: Math.max(0, left), resCount};
-}
-function renderReco(){
-  const R = computeReco();
+function renderPlanCard(P){
+  const cur = P.months[THIS];
+  const next12 = Object.entries(P.months).slice(0, 12);
+  const Rsum = next12.reduce((a,[,v])=>a+v.R,0), besSum = next12.reduce((a,[,v])=>a+v.besoins,0), envSum = next12.reduce((a,[,v])=>a+v.envies,0);
+  const empty = next12.filter(([,v]) => v.R < 1).length;
   const advice = [];
-  const empty = computeMonths().rows.filter(r => r.n >= 1 && r.n <= 12 && r.ent < 1).length;
-  if (empty >= 3) advice.push(['info', `${empty} des 12 prochains mois n'ont aucun revenu saisi. Si tes revenus pro reviennent régulièrement, ajoute un revenu récurrent estimé (par exemple ta moyenne de commissions) dans Revenus à venir ; sinon ta capacité d'épargne est sous-estimée.`]);
-  if (R.avg <= 0) advice.push(['bad', `Sur les 12 prochains mois, tes dépenses prévues dépassent tes entrées de ${fmt0(-R.avg)} par mois en moyenne. Avant d'épargner, réduis une charge ou ajoute les revenus qui manquent.`]);
-  else if (R.planned > R.capacity + 1) advice.push(['bad', `Tu prévois d'épargner ${fmt0(R.planned)} par mois alors que ta capacité, marge de sécurité déduite, est de ${fmt0(R.capacity)}. Réduis tes versements ou ton compte courant risque de baisser chaque mois.`]);
-  else advice.push(['good', `Tu peux épargner jusqu'à ${fmt0(R.capacity)} par mois (marge de ${R.marge} % gardée sur le compte courant). Tu en prévois ${fmt0(R.planned)} : il reste ${fmt0(R.capacity - R.planned)} par mois à placer.`]);
-  if (R.low.m && R.low.v < 0) advice.push(['bad', `Ton compte courant passe à ${fmt0(R.low.v)} en ${mName(R.low.m)}. Garde du disponible ou décale une dépense avant d'augmenter l'épargne.`]);
-  if (R.minNet < 0 && R.avg > 0) advice.push(['info', `Tes revenus varient : ${mName(R.minM.m)} est déficitaire (${fmt0(R.minNet)}). Des versements réguliers restent possibles, mais une épargne de précaution solide est prioritaire.`]);
-  if (R.resCount > 1) advice.push(['info', `${R.resCount} objectifs partent tous de ton épargne actuelle (Ressources) : elle est comptée plusieurs fois. Garde ce point de départ pour un seul objectif et saisis un montant pour les autres.`]);
-  const prec = S.objectifs.find(g => g.type === 'precaution');
-  const precTxt = prec ? '' : `<div class="advice info" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span>Épargne de précaution conseillée : <b>${fmt0(R.precTarget)}</b>, soit ${R.precMonths} mois de dépenses${R.precMonths === 6 ? ' (6 mois car une part importante de tes revenus est pro et variable)' : ''}. À garder sur un livret disponible immédiatement.</span><button class="btn" id="precBtn">Créer cet objectif</button></div>`;
-
-  const rows = R.goals.map(x => {
-    const st = x.st, ok = x.alloc + .5 >= st.besoin;
-    const res = st.status === 'atteint' ? '<span class="pill ok">Atteint</span>' : ok ? '<span class="pill ok">Atteint à temps</span>'
-      : x.reachAlloc == null ? '<span class="pill late">Hors de portée</span>' : `<span class="pill late">Atteint en ${mName(addM(THIS, x.reachAlloc))}</span>`;
-    const same = x.g.support === x.sup;
-    return `<tr><td><b>${esc(x.g.label)}</b><div class="hint">${fmt0(st.actuel)} / ${fmt0(st.cible)} · dans ${dur(st.n)}</div></td>
-      <td class="num" style="text-align:right">${fmt0(st.besoin)}</td>
-      <td class="num" style="text-align:right;font-weight:700">${fmt0(x.alloc)}</td>
-      <td class="num" style="text-align:right">${fmt0(st.pmt)}</td>
-      <td>${esc(supName(x.sup))}<div class="hint">${String(supRate(x.sup)).replace('.',',')} %/an${x.g.support && !same ? ' · actuel : ' + esc(supName(x.g.support)) : ''}</div></td>
-      <td>${res}</td>
-      <td>${st.status === 'atteint' || x.alloc < 1 ? '' : `<button class="btn" data-apply="${x.g.id}" title="Règle le versement mensuel sur ${fmt0(x.alloc)} et le placement conseillé">Appliquer</button>`}</td></tr>`;
+  if (empty >= 3) advice.push(['info', `${empty} des 12 prochains mois n'ont aucun revenu saisi, donc rien à épargner ces mois-là. Si tes revenus pro reviennent régulièrement, ajoute un revenu récurrent estimé (ta moyenne de commissions) dans Revenus à venir.`]);
+  if (Rsum > 0 && besSum/Rsum > .5) advice.push(['bad', `Sur 12 mois, tes besoins représentent ${Math.round(besSum/Rsum*100)} % de tes revenus (règle : 50 % maximum). C'est ce qui limite ton épargne.`]);
+  if (Rsum > 0 && envSum/Rsum > (100 - 50 - P.pct)/100) advice.push(['info', `Tes envies représentent ${Math.round(envSum/Rsum*100)} % de tes revenus (règle : ${100 - 50 - P.pct} % maximum).`]);
+  const late = P.goals.filter(x => x.status === 'retard');
+  if (late.length) advice.push(['bad', `Tous les objectifs ne passent pas avec ce plan : il manque ${fmt0(late.reduce((a,x)=>a+x.gap,0))} au total (${late.map(x => esc(x.label)).join(', ')}). Les objectifs les plus proches passent en premier ; voir chaque carte pour les options.`]);
+  else if (P.goals.length) advice.push(['good', 'Avec ce plan, tous tes objectifs sont atteints à leur échéance.']);
+  const cfg = S.reglages;
+  const rows = next12.map(([m,v]) => {
+    const f = Object.entries(v.alloc).filter(([,a]) => a >= 1).map(([id,a]) => { const x = P.goals.find(g => g.id === id); return x ? `${esc(x.label)} ${fmt0(a)}` : ''; }).filter(Boolean).join(' · ');
+    return `<tr class="${m === THIS ? 'cur' : ''}"><td>${mName(m)}</td><td>${fmt0(v.R)}</td><td>${fmt0(v.besoins)}</td><td>${fmt0(v.envies)}</td><td style="font-weight:700;color:var(--epa)">${fmt0(v.saving)}</td>
+      <td>${fmt0(v.acc.livretA)}</td><td>${fmt0(v.acc.ldds)}</td><td>${fmt0(v.acc.invest)}</td>
+      <td style="text-align:left;white-space:normal;min-width:180px" class="hint">${f || (v.saving ? 'Réserve libre' : '—')}${v.paid.length ? '<br>' + v.paid.map(p => `Paie ${esc(p.dep)} : ${fmt0(p.amt)}`).join('<br>') : ''}</td></tr>`;
   }).join('');
-
-  const bySup = {};
-  R.goals.forEach(x => { if (x.alloc > 0) bySup[x.sup] = (bySup[x.sup] || 0) + x.alloc; });
-  if (R.left > 5) bySup['libre'] = R.left;
-  const maxA = Math.max(1, ...Object.values(bySup));
-  const allocHtml = Object.entries(bySup).map(([k,v]) => `<div class="row"><span>${k === 'libre' ? 'Non affecté (PEA ou assurance-vie long terme, ou avancer un objectif)' : esc(supName(k))}</span><div class="track"><div class="fill" style="width:${v/maxA*100}%;${k === 'libre' ? 'background:var(--gold)' : ''}"></div></div><b class="num" style="text-align:right">${fmt0(v)}/mois</b></div>`).join('');
-
-  $('reco').innerHTML = `<h3>Préconisations <span>calculées sur tes entrées et sorties des 12 prochains mois</span></h3>
-    <div class="reco-kpis num">
-      <div><small>Entrées − dépenses, moyenne mensuelle</small><b class="${R.avg < 0 ? 'neg' : ''}">${fmt0(R.avg)}</b></div>
-      <div><small>Mois le plus faible</small><b class="${R.minNet < 0 ? 'neg' : ''}">${fmt0(R.minNet)}</b></div>
-      <div><small>Capacité d'épargne conseillée</small><b style="color:var(--epa)">${fmt0(R.capacity)}</b></div>
-      <div><small>Épargne prévue au budget</small><b>${fmt0(R.planned)}</b></div>
-      <div><small>Marge de sécurité</small><b><select id="margeSel" class="btn" style="padding:3px 6px;font:inherit;font-size:16px">${[0,10,20,30].map(m => `<option value="${m}" ${m === R.marge ? 'selected' : ''}>${m} %</option>`).join('')}</select></b></div>
+  $('planCard').innerHTML = `
+    <div class="bar-row"><h3 style="margin:0">Plan d'épargne</h3>
+      <div class="cfg">
+        <label>Méthode <select data-cfg="mode"><option value="regle" ${P.mode === 'regle' ? 'selected' : ''}>Règle 50/30/20</option><option value="max" ${P.mode === 'max' ? 'selected' : ''}>Tout ce qui reste</option></select></label>
+        ${P.mode === 'regle' ? `<label>Part épargnée <input data-cfg="pct" inputmode="decimal" value="${P.pct}"> % des revenus</label>` : `<label>Garder sur le compte <input data-cfg="marge" inputmode="decimal" value="${P.marge}"> % du reste</label>`}
+        <label title="Pour les revenus pro non imposés à la source : impôts, cotisations">Provision impôts et cotisations <input data-cfg="prov" inputmode="decimal" value="${num(cfg.prov)}"> % des revenus pro</label>
+      </div></div>
+    <div class="plan-now num">
+      <div><div class="eyebrow">À mettre de côté ${mName(THIS,{month:'long'})}</div><div class="big2">${fmt0(cur.saving)}</div>
+        <div class="hint">${cur.R > 0 ? `${P.mode === 'regle' ? P.pct + ' % de ' + fmt0(cur.R) + ' de revenus' : 'reste après dépenses, moins ' + P.marge + ' %'}${cur.libre < cur.R*P.pct/100 && P.mode === 'regle' ? `, limité à ce qui reste après tes dépenses (${fmt0(Math.max(0,cur.libre))})` : ''}` : 'Aucun revenu prévu ce mois-ci'}</div></div>
+      <div class="split">${ACC.map(a => `<div><small>${a.nom}</small><b>${fmt0(cur.acc[a.id])}</b></div>`).join('')}</div>
     </div>
     ${advice.map(([c,t]) => `<div class="advice ${c}">${t}</div>`).join('')}
-    ${precTxt}
-    ${R.goals.length ? `<div class="scroll"><table class="rtable" style="min-width:820px"><thead><tr><th>Objectif (par priorité)</th><th style="text-align:right">Nécessaire / mois</th><th style="text-align:right">Conseillé / mois</th><th style="text-align:right">Prévu / mois</th><th>Placement conseillé</th><th>Résultat avec le conseillé</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="sub" style="margin-top:14px;font-weight:700">Où placer chaque mois</div><div class="alloc num">${allocHtml || '<p class="hint">Rien à placer pour l\'instant.</p>'}</div>`
-      : '<p class="hint">Crée un objectif pour recevoir un montant et un placement conseillés.</p>'}
-    <p class="hint" style="margin-top:12px">Ordre de priorité : épargne de précaution, puis objectifs par échéance la plus proche. Placement selon l'horizon : moins de 2 ans livret, 2 à 5 ans fonds euros, 5 à 8 ans assurance-vie en unités de compte, au-delà PEA. Repères généraux calculés sur tes chiffres, pas un conseil personnalisé ; vérifie les taux et ta fiscalité (TMI pour le PER) avant d'agir.</p>`;
-  $('margeSel').onchange = e => { S.reglages.marge = +e.target.value; put('reglages', 'main', {...S.reglages}); renderAll(); };
-  const pb = $('precBtn'); if (pb) pb.onclick = createPrec;
-  renderSupTable();
+    <div class="scroll"><table class="mtable num" style="min-width:900px"><thead><tr><th>Mois</th><th>Revenus</th><th>Besoins</th><th>Envies</th><th>À épargner</th><th>Livret A</th><th>LDDS</th><th>Investi</th><th style="text-align:left">Ce que ça finance</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="hint" style="margin-top:10px">Chaque mois : ${P.mode === 'regle' ? `${P.pct} % des revenus prévus, sans dépasser ce qui reste après les dépenses` : 'tout ce qui reste après les dépenses, moins la marge'}. L'argent va sur le Livret A jusqu'à son plafond, puis le LDDS, puis l'investissement. Il finance les objectifs dans l'ordre de priorité (par défaut : précaution, puis échéance la plus proche ; bouton « Prioriser » pour changer). Ces versements apparaissent comme lignes « plan d'épargne » dans le Tableau de bord, où tu les coches comme le reste.</p>`;
 }
-function renderSupTable(){
-  $('supTable').innerHTML = `<thead><tr><th>Placement</th><th style="text-align:right">Taux %/an</th><th>Horizon</th><th>Disponibilité</th><th>Plafond</th><th>Fiscalité</th><th>Risque</th></tr></thead><tbody>` +
-    SUPPORTS.map(x => `<tr><td><b>${esc(x.nom)}</b></td><td style="text-align:right"><input inputmode="decimal" data-sup="${x.id}" value="${String(supRate(x.id)).replace('.',',')}" aria-label="Taux ${esc(x.nom)}"></td><td>${esc(x.horizon)}</td><td class="hint">${esc(x.dispo)}</td><td class="hint">${esc(x.plafond)}</td><td class="hint">${esc(x.fisc)}</td><td class="hint">${esc(x.risque)}</td></tr>`).join('') + '</tbody>';
+function renderAccCard(P){
+  const in12 = P.months[addM(THIS, 11)] || P.months[THIS];
+  $('accCard').innerHTML = `<h3>Mes comptes d'épargne <span>aujourd'hui → dans 12 mois</span></h3>
+    <div class="acc num">${ACC.map(a => { const now = P.startBal[a.id], later = in12.bal[a.id], plaf = a.plafond;
+      return `<div><small class="hint">${a.nom}</small><b>${fmt0(now)} → ${fmt0(later)}</b>
+        ${isFinite(plaf) ? `<div class="track"><div class="fill" style="width:${Math.min(100, later/plaf*100)}%"></div></div><span class="hint">Plafond ${fmt0(plaf)}${later >= plaf - 1 ? ' atteint : la suite va sur le compte suivant' : ''}</span>` : '<span class="hint">Pas de plafond</span>'}
+        <label class="hint">Rendement <input data-acc="${a.id}" inputmode="decimal" value="${String(accRate(a.id)).replace('.',',')}"> %/an</label></div>`; }).join('')}</div>
+    <p class="hint" style="margin-top:8px">Plafonds et taux indicatifs : vérifie les taux réglementés en vigueur et le rendement de tes contrats. Les soldes de départ viennent de l'onglet Ressources.</p>`;
 }
-function createPrec(){
-  const R = lastReco || computeReco();
-  const g = {id: uid(), debut: THIS, type:'precaution', label:'Épargne de précaution', cible: String(Math.round(R.precTarget/100)*100), echeance: addM(THIS, 12),
-    depart:'0', rendement:'0', support:'livret', link:'none', manuel:'0', base: S.objectifs.some(o => o.base === 'res') ? 'manuel' : 'res'};
-  S.objectifs.push(g); put('objectifs', g.id, body(g)); renderAll(); toast('Objectif « Épargne de précaution » créé');
-}
-function applyReco(gid){
-  const R = lastReco || computeReco(), x = R.goals.find(y => y.g.id === gid); if (!x) return;
-  const g = x.g, amt = Math.max(0, Math.round(x.alloc));
-  let it = g.link && g.link !== 'all' && g.link !== 'none' ? S.items.find(i => i.id === g.link) : null;
-  if (it){ it.amount = amt; }
-  else { it = {id: uid(), label: 'Épargne · ' + g.label, section:'epa', scope:'perso', type:'', amount: amt, freq:'mensuel', start: THIS, end: null, day: 5}; S.items.push(it); g.link = it.id; }
-  g.support = x.sup;
-  put('budget_items', it.id, body(it)); put('objectifs', g.id, body(g));
-  renderAll(); toast(`${fmt0(amt)} par mois sur « ${it.label} », placement : ${supName(x.sup)}`);
-}
-document.addEventListener('click', e => { const a = e.target.closest('[data-apply]'); if (a) applyReco(a.dataset.apply); });
-document.addEventListener('change', e => {
-  const t = e.target; if (!t.dataset || !t.dataset.sup) return;
-  const v = parseNum(t.value); S.reglages.taux = {...S.reglages.taux, [t.dataset.sup]: v == null ? null : v};
-  if (v == null) delete S.reglages.taux[t.dataset.sup];
-  put('reglages', 'main', {...S.reglages}); renderAll(); toast('Taux mis à jour, projections recalculées');
-});
-
 function renderGoals(){
-  renderReco();
-  recCard($('epaRec'), ['epa'], 'Versements d\'épargne', 'Les lignes qui alimentent tes objectifs. Coche « Versé ce mois » ici ou dans le Tableau de bord : c\'est la même case.');
-  if (!S.objectifs.length){
-    $('goals').innerHTML = `<div class="card"><h3>Aucun objectif</h3><p class="hint">Exemples : « Apport immobilier : 40 000 € en juin 2029 », « Capital 100 000 € dans 8 ans », « Épargne de précaution : 3 mois de dépenses ». Crée ton premier objectif avec le bouton ci-dessus.</p></div>`;
+  const P = buildPlan();
+  renderPlanCard(P);
+  renderAccCard(P);
+  recCard($('epaRec'), ['epa'], 'Versements manuels', 'Facultatif. Des versements que tu veux faire en plus ou à la place du plan (ex. 900 € en octobre sur le Livret A). Ils comptent dans l\'épargne du mois : le plan complète jusqu\'au montant conseillé.');
+  if (!P.goals.length){
+    $('goals').innerHTML = `<div class="card"><h3>Aucun objectif</h3><p class="hint">Crée un objectif (mariage, apport, voiture…) ou relie une dépense prévue avec « Épargner pour » dans Dépenses à venir. Le plan répartit automatiquement ton épargne entre eux.</p></div>`;
     return;
   }
-  $('goals').innerHTML = S.objectifs.map(g => {
-    const st = goalStats(g), p = st.cible ? Math.min(1, st.actuel/st.cible) : 0, pp = st.cible ? Math.min(1, st.projete/st.cible) : 0;
-    const pill = st.status === 'atteint' ? '<span class="pill ok">Atteint</span>' : st.status === 'ok' ? '<span class="pill ok">Dans les temps</span>' : '<span class="pill late">En retard</span>';
-    const src = g.link === 'all' ? 'toute l\'épargne du budget' : st.items[0] ? st.items[0].label : 'versement manuel';
-    const reachTxt = st.reach === 0 ? 'Déjà atteint' : st.reach == null ? 'Jamais au rythme actuel' : mName(addM(THIS, st.reach));
-    // Mini chart: projected path vs target
-    const n = Math.max(st.n, st.reach || 0, 6), W = 320, H = 90, steps = Math.min(n, 120);
-    const pts = []; for (let k = 0; k <= steps; k++){ const kk = Math.round(k*n/steps); pts.push([kk, st.fv(kk)]); }
-    const maxV = Math.max(st.cible, ...pts.map(q => q[1])) || 1;
-    const X = k => 4 + k/n*(W-8), Y = v => H - 6 - v/maxV*(H-18);
-    const path = pts.map((q,i) => (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ');
-    const dl = X(st.n);
-    const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projection du capital">
-      <line x1="4" x2="${W-4}" y1="${Y(st.cible)}" y2="${Y(st.cible)}" stroke="var(--gold)" stroke-dasharray="4 3"/>
-      <text x="${W-4}" y="${Y(st.cible)-4}" text-anchor="end" font-size="10" fill="var(--gold)" font-family="Manrope,sans-serif">cible ${fmt0(st.cible)}</text>
-      <line x1="${dl}" x2="${dl}" y1="8" y2="${H-6}" stroke="var(--line)"/>
-      <text x="${Math.min(dl+4, W-60)}" y="${H-8}" font-size="10" fill="var(--muted)" font-family="Manrope,sans-serif">échéance</text>
-      <path d="${path} L ${X(pts[pts.length-1][0])} ${H-6} L ${X(0)} ${H-6} Z" fill="var(--epa-soft)"/>
-      <path d="${path}" fill="none" stroke="var(--epa)" stroke-width="2"/></svg>`;
+  $('goals').innerHTML = P.goals.map((x, i) => {
+    const pNow = x.cible ? Math.min(1, x.now/x.cible) : 0, pDl = x.cible ? Math.min(1, x.atDl/x.cible) : 0;
+    const pill = x.status === 'atteint' ? '<span class="pill ok">Atteint</span>' : x.status === 'ok' ? '<span class="pill ok">Atteint à temps</span>' : '<span class="pill late">Pas atteint à temps</span>';
+    const sim = !x.dep && similarDep(x.g);
+    const status = x.status === 'retard'
+      ? `<div class="gap">À l'échéance il manquera <b>${fmt0(x.gap)}</b> (${fmt0(x.atDl)} sur ${fmt0(x.cible)}). ${x.reached ? `Avec ce plan, objectif atteint en <b>${mName(x.reached)}</b>.` : 'Pas atteint dans les 10 ans avec ce plan.'} Pour le tenir : repousser l'échéance, baisser le montant, réduire tes envies ou augmenter la part épargnée.</div>`
+      : `<div class="ok">${x.status === 'atteint' ? 'Montant déjà mis de côté.' : `Atteint en ${mName(x.reached)}, avant l'échéance.`}${x.dep ? ` Le moment venu, cette épargne paie « ${esc(x.dep.label)} » : ton compte courant n'est pas touché.` : ''}</div>`;
     return `<article class="card goal">
-      <div class="top"><div><h4>${esc(g.label)}</h4><div class="sub">${fmt0(st.cible)} d'ici ${mName(g.echeance)} · dans ${dur(st.n)}</div></div>${pill}</div>
-      <div class="amount num">${fmt0(st.actuel)} <small>constitués · ${Math.round(p*100)} %</small></div>
-      <div class="gtrack" title="Trait doré : capital projeté à l'échéance"><div class="fill" style="width:${p*100}%"></div><div class="proj" style="left:calc(${pp*100}% - 1px)"></div></div>
+      <div class="top"><div><h4>${esc(x.label)}</h4><div class="sub">Priorité ${i + 1} · ${fmt0(x.cible)} pour ${mName(x.dl)} · dans ${dur(x.n)}</div></div>${pill}</div>
+      ${x.dep ? `<div><span class="chipdep">Paie : ${esc(x.dep.label)} · ${fmt0(x.dep.amount)} · ${mName(x.dep.m)}</span></div>` : ''}
+      <div class="amount num">${fmt0(x.now)} <small>mis de côté · ${Math.round(pNow*100)} %</small></div>
+      <div class="gtrack" title="Vert : aujourd'hui. Trait doré : à l'échéance avec le plan"><div class="fill" style="width:${pNow*100}%"></div><div class="proj" style="left:calc(${pDl*100}% - 1px)"></div></div>
       <div class="gkv num">
-        <div><small>Versement prévu / mois</small><b>${fmt0(st.pmt)}</b></div>
-        <div><small>Nécessaire / mois</small><b class="${st.pmt + 0.5 >= st.besoin ? 'pos' : 'neg'}">${fmt0(st.besoin)}</b></div>
-        <div><small>Projeté à l'échéance</small><b>${fmt0(st.projete)}</b></div>
-        <div><small>Atteint au rythme actuel</small><b>${reachTxt}</b></div>
+        <div><small>Ce mois-ci</small><b>${fmt0(x.next)}</b></div>
+        <div><small>En moyenne par mois</small><b>${fmt0(x.avg)}</b></div>
+        <div><small>À l'échéance avec le plan</small><b class="${x.gap > 1 ? 'neg' : 'pos'}">${fmt0(x.atDl)}</b></div>
+        <div><small>Il faudrait par mois</small><b>${fmt0(x.n ? Math.max(0, x.cible - x.now)/x.n : Math.max(0, x.cible - x.now))}</b></div>
       </div>
-      ${svg}
-      <div class="bar-row"><span class="hint">Alimenté par : ${esc(src)}${g.support ? ` · ${esc(supName(g.support))}` : ''}${st.rate ? ` · ${String(st.rate).replace('.',',')} %/an` : ''}${st.fromRes ? ' · départ : épargne de l\'onglet Ressources' : st.verse ? ` · ${fmt0(st.verse)} versés depuis ${mName(g.debut || THIS)}` : ''}</span><button class="btn" data-goal="${g.id}">Modifier</button></div>
+      ${status}
+      <div class="bar-row">${sim ? `<button class="btn" data-linkdep="${x.id}|d:${sim.id}">Relier à « ${esc(sim.libelle)} » (${fmt0(num(sim.montant))}, ${mName(sim.date.slice(0,7))})</button>` : '<span></span>'}<div style="display:flex;gap:8px">${i > 0 ? `<button class="btn" data-up="${x.id}" title="Passer avant « ${esc(P.goals[i-1].label)} »">↑ Prioriser</button>` : ''}<button class="btn" data-goal="${x.id}">Modifier</button></div></div>
     </article>`;
   }).join('');
 }
+function createPrec(){
+  const P = buildPlan(), ms = Object.values(P.months).slice(0, 12);
+  const dep = ms.reduce((a,v)=>a+v.besoins+v.envies,0) / (ms.length || 1);
+  const pro = ms.reduce((a,v)=>a+v.R,0) ? (() => { let p = 0, t = 0; Object.keys(P.months).slice(0,12).forEach(m => { const L = baseLines(m).rev; L.forEach(l => { t += l.eff; if (l.scope === 'pro') p += l.eff; }); }); return t ? p/t : 0; })() : 0;
+  const mult = pro > .3 ? 6 : 3;
+  const g = {id: uid(), debut: THIS, type:'precaution', label:'Épargne de précaution', cible: String(Math.max(1000, Math.round(dep*mult/100)*100)), echeance: addM(THIS, 12), depart:'', depense:''};
+  S.objectifs.push(g); put('objectifs', g.id, body(g)); renderAll(); toast(`Épargne de précaution : ${mult} mois de dépenses`);
+}
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.cfg){
+    const k = t.dataset.cfg; S.reglages[k] = k === 'mode' ? t.value : (parseNum(t.value) ?? 0);
+    put('reglages', 'main', {...S.reglages}); renderAll(); toast('Plan recalculé');
+  }
+  if (t.dataset && t.dataset.acc){
+    const v = parseNum(t.value); S.reglages.taux = {...S.reglages.taux}; if (v == null) delete S.reglages.taux[t.dataset.acc]; else S.reglages.taux[t.dataset.acc] = v;
+    put('reglages', 'main', {...S.reglages}); renderAll(); toast('Rendement mis à jour');
+  }
+});
+document.addEventListener('click', e => {
+  const l = e.target.closest('[data-linkdep]');
+  if (l){ const [gid, ref] = l.dataset.linkdep.split('|'); const g = S.objectifs.find(o => o.id === gid); const d = depRef(ref); if (!g || !d) return;
+    g.depense = ref; g.echeance = d.m; put('objectifs', g.id, body(g)); renderAll(); toast(`« ${g.label} » paiera « ${d.label} »`); }
+  const up = e.target.closest('[data-up]');
+  if (up){ const order = buildPlan().goals.map(x => x.id), i = order.indexOf(up.dataset.up); if (i > 0){ [order[i-1], order[i]] = [order[i], order[i-1]];
+    order.forEach((id, n) => { const g = S.objectifs.find(o => o.id === id); if (g && g.prio !== n){ g.prio = n; put('objectifs', g.id, body(g)); } }); renderAll(); toast('Priorité modifiée, plan recalculé'); } }
+  const mk = e.target.closest('[data-mkgoal]');
+  if (mk){ const d = S.depenses.find(x => x.id === mk.dataset.mkgoal); if (!d) return;
+    const g = {id: uid(), debut: THIS, label: d.libelle || 'Dépense prévue', cible: String(num(d.montant)), echeance: d.date.slice(0,7), depart:'', depense: 'd:' + d.id};
+    S.objectifs.push(g); put('objectifs', g.id, body(g)); renderAll(); toast(`Objectif créé : l'épargne paiera « ${g.label} »`); }
+});
 
 // ================= Render: prévisionnel =================
 function computeMonths(){
   const res = [];
   const start = num(S.ressources.cc) + num(S.ressources.autres);
-  let cc = start, ep = num(S.ressources.epargne);
+  let cc = start; const P = buildPlan();
   for (let n = -3; n <= horizon; n++){
     const m = addM(THIS, n), t = totals(m);
     const sum = (a, f) => a.filter(f).reduce((x,l)=>x+l.eff,0);
@@ -1175,10 +1222,11 @@ function computeMonths(){
     const dep = t.fix.eff + t.var.eff, epa = t.epa.eff, ent = entPro + entPerso;
     const net = ent - dep - epa;
     const lateAmt = t.rev.lines.filter(l => l.late).reduce((x,l)=>x+l.prevu,0);
-    let ccEnd = null, epaEnd = null;
-    if (n === 0){ const restIn = t.rev.eff - t.rev.reel, restOut = ['fix','var','epa'].reduce((x,s)=>x+t[s].eff-t[s].reel,0); cc += restIn - restOut; ccEnd = cc; ep += t.epa.eff - t.epa.reel; epaEnd = ep; }
-    else if (n > 0){ cc += net; ccEnd = cc; ep += epa; epaEnd = ep; }
-    res.push({m, n, entPro, entPerso, ent, dep, epa, net, ccEnd, epaEnd, lateAmt});
+    let ccEnd = null, epaEnd = null; const pm = P.months[m], retrait = pm ? pm.retrait : 0;
+    if (n === 0){ const restIn = t.rev.eff - t.rev.reel, restOut = ['fix','var','epa'].reduce((x,s)=>x+t[s].eff-t[s].reel,0); cc += restIn - restOut + retrait; ccEnd = cc; }
+    else if (n > 0){ cc += net + retrait; ccEnd = cc; }
+    if (pm) epaEnd = sumBal(pm.bal);
+    res.push({m, n, entPro, entPerso, ent, dep, epa, net, retrait, ccEnd, epaEnd, lateAmt});
   }
   return {rows: res, start};
 }
@@ -1210,7 +1258,7 @@ function renderPrev(){
       <div><b>${fmt0(start)}</b><small>Liquidités de départ (compte courant + autres)</small></div>
       <div><b class="pos">${fmt0(fut.reduce((a,r)=>a+r.ent,0))}</b><small>Entrées prévues (pro + perso + budget)</small></div>
       <div><b class="neg">${fmt0(fut.reduce((a,r)=>a+r.dep,0))}</b><small>Dépenses prévues</small></div>
-      <div><b style="color:var(--epa)">${fmt0(fut.reduce((a,r)=>a+r.epa,0))}</b><small>Versements d'épargne (épargne fin de période : ${fmt0(fut.length ? fut[fut.length-1].epaEnd : num(S.ressources.epargne))})</small></div>
+      <div><b style="color:var(--epa)">${fmt0(fut.reduce((a,r)=>a+r.epa,0))}</b><small>Versements d'épargne (épargne fin de période : ${fmt0(fut.length ? fut[fut.length-1].epaEnd : sumBal(resAcc()))})</small></div>
       <div><b>${fmt0(endCc)}</b><small>Compte courant fin de période</small></div>
       <div><b class="${low.v < 0 ? 'neg' : ''}">${low.m ? fmt0(low.v) : '—'}</b><small>Point le plus bas${low.m ? ' (' + mName(low.m,{month:'long'}) + ')' : ''}</small></div>
     </div>`;
@@ -1241,15 +1289,17 @@ function renderPrev(){
   }
   $('projChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entrées, sorties et compte courant projeté" font-family="Manrope,system-ui,sans-serif" class="num">${g}</svg>`;
 
-  $('mtable').innerHTML = `<thead><tr><th>Mois</th><th>Entrées pro</th><th>Entrées perso</th><th>Dépenses</th><th>Épargne</th><th>Solde du mois</th><th>Compte courant fin de mois</th><th>Épargne cumulée</th></tr></thead><tbody>` +
+  $('mtable').innerHTML = `<thead><tr><th>Mois</th><th>Entrées pro</th><th>Entrées perso</th><th>Dépenses</th><th>Épargne</th><th>Solde du mois</th><th>Payé par l'épargne</th><th>Compte courant fin de mois</th><th>Épargne totale</th></tr></thead><tbody>` +
     rows.map(r => `<tr class="${r.n === 0 ? 'cur' : r.n < 0 ? 'past' : ''}"><td>${mName(r.m)}${r.n === 0 ? ' · en cours' : ''}${r.lateAmt > 0.5 && r.n <= 0 ? ' <span class="pill late">retard</span>' : ''}</td>
       <td>${fmt0(r.entPro)}</td><td>${fmt0(r.entPerso)}</td><td>${fmt0(r.dep)}</td><td>${fmt0(r.epa)}</td>
-      <td class="${r.net < 0 ? 'neg' : 'pos'}">${fmt0(r.net)}</td><td class="${r.ccEnd != null && r.ccEnd < 0 ? 'neg' : ''}">${r.ccEnd == null ? '—' : fmt0(r.ccEnd)}</td><td style="color:var(--epa)">${r.epaEnd == null ? '—' : fmt0(r.epaEnd)}</td></tr>`).join('') + '</tbody>';
+      <td class="${r.net < 0 ? 'neg' : 'pos'}">${fmt0(r.net)}</td><td>${r.retrait ? '+ ' + fmt0(r.retrait) : '—'}</td><td class="${r.ccEnd != null && r.ccEnd < 0 ? 'neg' : ''}">${r.ccEnd == null ? '—' : fmt0(r.ccEnd)}</td><td style="color:var(--epa)">${r.epaEnd == null ? '—' : fmt0(r.epaEnd)}</td></tr>`).join('') + '</tbody>';
 }
 
 // ================= Render: ressources =================
+const RES_FIELDS = ['cc','autres','livretA','ldds','invest'];
 function renderRes(){
-  ['cc','epargne','autres'].forEach(k => { const el = $('res' + k[0].toUpperCase() + k.slice(1)); if (document.activeElement !== el) el.value = S.ressources[k] || ''; });
+  const legacy = !S.ressources.livretA && !S.ressources.ldds && !S.ressources.invest && num(S.ressources.epargne);
+  RES_FIELDS.forEach(k => { const el = $('res' + k[0].toUpperCase() + k.slice(1)); if (document.activeElement !== el) el.value = k === 'livretA' && legacy ? S.ressources.epargne : (S.ressources[k] || ''); });
   $('resTotal').textContent = fmt0(totalRes());
   $('resMaj').textContent = S.ressources.maj ? ' · mis à jour le ' + new Date(S.ressources.maj).toLocaleDateString('fr-FR') : ' · jamais mis à jour';
 }
@@ -1257,6 +1307,7 @@ function renderRes(){
 // ================= Tabs & global render =================
 const RENDER = {budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
 function renderAll(){
+  PLAN = null;
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'p-' + tab);
   RENDER[tab]();
@@ -1310,7 +1361,10 @@ function applyEdit(m, k, f, val){
   } else {
     let v = parseNum(val);
     if (f === 'prevu'){
-      const base = k.startsWith('d:') ? num((S.depenses.find(d => d.id === k.slice(2)) || {}).montant) : num((S.items.find(i => i.id === k) || {}).amount);
+      const base = k.startsWith('d:') ? num((S.depenses.find(d => d.id === k.slice(2)) || {}).montant)
+        : k.startsWith('plan:') ? Math.round(((buildPlan().months[m] || {}).planBase || {})[k.slice(5)] || 0)
+        : k === 'prov' ? Math.round(baseLines(m).rev.filter(l => l.scope === 'pro').reduce((a,l)=>a+l.eff,0) * num(S.reglages.prov))/100
+        : num((S.items.find(i => i.id === k) || {}).amount);
       if (v === base) v = null;
     }
     setRec(m, k, f === 'reel' ? {reel: v, auto: null} : {[f]: v});
@@ -1369,14 +1423,17 @@ $('depBody').addEventListener('input', e => {
 $('depBody').addEventListener('change', e => {
   const tr = e.target.closest('[data-did]'), f = e.target.dataset.df; if (!tr || !f) return;
   const d = S.depenses.find(x => x.id === tr.dataset.did); if (!d) return;
+  if (f === 'nature'){ d.nature = e.target.value; put('depenses', d.id, body(d)); renderDepenses(); renderHero(); return; }
   if (e.target.type === 'checkbox'){ d[f] = e.target.checked; if (f === 'recurrente' && d.recurrente) d.avancee = false; put('depenses', d.id, body(d)); renderDepenses(); renderHero(); }
   else if (f === 'date'){ d.date = e.target.value; put('depenses', d.id, body(d)); renderDepStats(); renderHero(); }
 });
 
 // ================= Ressources events =================
-['cc','epargne','autres'].forEach(k => {
+RES_FIELDS.forEach(k => {
   $('res' + k[0].toUpperCase() + k.slice(1)).addEventListener('input', e => {
+    if (k === 'livretA' && !S.ressources.livretA && !S.ressources.ldds && !S.ressources.invest) S.ressources.epargne = '';
     S.ressources[k] = e.target.value.replace(',','.').replace(/[^\d.\-]/g,''); S.ressources.maj = TODAY_ISO;
+    const b = resAcc(); S.ressources.epargne = String(sumBal(b));
     put('ressources', 'main', {...S.ressources}); $('resTotal').textContent = fmt0(totalRes()); renderHero();
   });
 });
@@ -1403,7 +1460,7 @@ armed($('restoreBtn'), 'Confirmer : remplacer mes données', () => {
 let editingItem = null;
 function syncItemForm(){
   const sec = $('iSection').value, fq = $('iFreq').value;
-  $('iTypeWrap').hidden = !(sec === 'fix' || sec === 'var');
+  $('iTypeWrap').hidden = !(sec === 'fix' || sec === 'var'); $('iCompteWrap').hidden = sec !== 'epa';
   $('iEndWrap').hidden = fq === 'ponctuel';
   $('iStartLbl').textContent = fq === 'ponctuel' ? 'Mois' : 'À partir de';
   $('iHint').textContent = fq === 'ponctuel' ? 'Apparaît uniquement le mois choisi.'
@@ -1413,7 +1470,7 @@ function openItem(id, sec){
   editingItem = id ? S.items.find(i => i.id === id) : null;
   const it = editingItem || {section: sec || 'fix', label:'', amount:null, type:'Obligatoire', scope:'perso', freq:'mensuel', start:month, end:null, day:null};
   $('itemTitle').textContent = editingItem ? 'Modifier la ligne' : 'Nouvelle ligne';
-  $('iLabel').value = it.label; $('iSection').value = it.section; $('iType').value = it.type || 'Obligatoire'; $('iScope').value = it.scope || 'perso';
+  $('iLabel').value = it.label; $('iSection').value = it.section; $('iType').value = it.type || 'Obligatoire'; $('iScope').value = it.scope || 'perso'; $('iCompte').value = it.compte || 'livretA';
   $('iAmount').value = numStr(it.amount == null ? null : num(it.amount)); $('iDay').value = it.day ?? ''; $('iFreq').value = it.freq;
   $('iStart').value = it.start; $('iEnd').value = it.end || '';
   $('iDelete').hidden = !editingItem; $('iDelete').classList.remove('armed'); $('iDelete').textContent = 'Supprimer';
@@ -1428,7 +1485,7 @@ $('itemForm').addEventListener('submit', e => {
   const start = $('iStart').value || month, freq = $('iFreq').value, end = freq === 'ponctuel' ? null : ($('iEnd').value || null);
   if (end && idx(end) < idx(start)){ $('iEnd').setCustomValidity('La date de fin doit être après le début'); $('iEnd').reportValidity(); return; }
   const sec = $('iSection').value, day = parseInt($('iDay').value, 10);
-  const data = {label: $('iLabel').value.trim(), section: sec, scope: $('iScope').value, type: (sec === 'fix' || sec === 'var') ? $('iType').value : '', amount, freq, start, end, day: day >= 1 && day <= 31 ? day : null};
+  const data = {label: $('iLabel').value.trim(), section: sec, scope: $('iScope').value, type: (sec === 'fix' || sec === 'var') ? $('iType').value : '', compte: sec === 'epa' ? $('iCompte').value : '', amount, freq, start, end, day: day >= 1 && day <= 31 ? day : null};
   let it = editingItem;
   if (it) Object.assign(it, data); else { it = {id: uid(), ...data}; S.items.push(it); }
   put('budget_items', it.id, body(it));
@@ -1439,43 +1496,45 @@ armed($('iDelete'), 'Confirmer la suppression', () => {
   const id = editingItem.id;
   S.items = S.items.filter(i => i.id !== id); del('budget_items', id);
   for (const m in S.months){ if (S.months[m].recs[id]){ delete S.months[m].recs[id]; put('budget_months', m, {recs: S.months[m].recs}); } }
-  S.objectifs.forEach(g => { if (g.link === id){ g.link = 'none'; put('objectifs', g.id, body(g)); } });
+  S.objectifs.forEach(g => { if (g.depense === 'b:' + id){ g.depense = ''; put('objectifs', g.id, body(g)); } });
   $('dlgItem').close(); renderAll(); toast('Ligne supprimée');
 });
 
 // ================= Goal dialog =================
 let editingGoal = null;
 function syncGoalForm(){
-  const l = $('gLink').value; $('gManualWrap').hidden = l !== 'none'; $('gRateWrap').hidden = !!$('gSupport').value; $('gStartWrap').hidden = $('gBase').value === 'res';
-  $('gHint').textContent = ($('gBase').value === 'res' ? 'Le capital actuel suit l\'épargne indiquée dans Ressources : mets-la à jour et l\'objectif bouge avec. ' : '') + (l === 'none' ? 'Sans lien, la progression ne bouge que si tu modifies « Déjà constitué ». Relie plutôt l\'objectif à une ligne d\'épargne du tableau de bord.'
-    : 'Le versement prévu de la ligne liée sert à la projection' + ($('gBase').value === 'res' ? '.' : ' ; chaque versement coché s\'ajoute au capital.'));
+  const d = depRef($('gDep').value);
+  $('gDeadline').disabled = !!d;
+  if (d){ $('gDeadline').value = d.m; if (!$('gTarget').value) $('gTarget').value = String(d.amount); }
+  $('gHint').textContent = d ? `Le plan met de côté chaque mois pour avoir ${fmt0(d.amount)} en ${mName(d.m)}. Ce mois-là, l'épargne paie la dépense : ton compte courant n'est pas touché.`
+    : 'Le plan répartit ton épargne mensuelle entre tes objectifs, le plus proche en premier. Tu verras chaque mois combien va sur cet objectif.';
 }
 function openGoal(id){
   editingGoal = id ? S.objectifs.find(g => g.id === id) : null;
-  const g = editingGoal || {label:'', cible:'', echeance: addM(THIS, 36), depart:'', rendement:'', link: 'all', manuel:'', base:'res'};
-  const ep = S.items.filter(i => i.section === 'epa');
-  $('gLink').innerHTML = `<option value="all">Toute l'épargne du budget (${ep.length} ligne${ep.length > 1 ? 's' : ''})</option>` + ep.map(i => `<option value="${i.id}">Ligne « ${esc(i.label)} » (${fmt0(monthlyOf(i))}/mois)</option>`).join('') + '<option value="none">Aucune, versement saisi à la main</option>';
+  const g = editingGoal || {label:'', cible:'', echeance: addM(THIS, 12), depart:'', depense:''};
+  const deps = S.depenses.filter(d => !d.recurrente && d.date && d.date.slice(0,7) >= THIS);
+  const its = S.items.filter(i => (i.section === 'fix' || i.section === 'var') && i.freq === 'ponctuel' && i.start >= THIS);
+  $('gDep').innerHTML = '<option value="">Non, c\'est une réserve (mariage, apport, voyage…)</option>'
+    + deps.map(d => `<option value="d:${d.id}">${esc(d.libelle || 'Dépense')} · ${fmt0(num(d.montant))} · ${mName(d.date.slice(0,7))}</option>`).join('')
+    + its.map(i => `<option value="b:${i.id}">${esc(i.label)} · ${fmt0(num(i.amount))} · ${mName(i.start)}</option>`).join('');
   $('goalTitle').textContent = editingGoal ? 'Modifier l\'objectif' : 'Nouvel objectif';
-  $('gBase').value = g.base || 'manuel'; $('gLabel').value = g.label; $('gTarget').value = g.cible; $('gDeadline').value = g.echeance; $('gStart').value = g.depart;
-  $('gSupport').innerHTML = '<option value="">Rendement personnalisé</option>' + SUPPORTS.map(x => `<option value="${x.id}">${esc(x.nom)} (${String(supRate(x.id)).replace('.',',')} %)</option>`).join('');
-  $('gSupport').value = g.support || '';
-  $('gRate').value = g.rendement; $('gLink').value = g.link || 'none'; $('gManual').value = g.manuel || '';
+  $('gLabel').value = g.label; $('gTarget').value = g.cible; $('gDeadline').value = g.echeance; $('gStart').value = num(g.depart) ? g.depart : '';
+  $('gDep').value = g.depense || '';
   $('gDelete').hidden = !editingGoal; $('gDelete').classList.remove('armed'); $('gDelete').textContent = 'Supprimer';
   syncGoalForm(); $('dlgGoal').showModal(); $('gLabel').focus();
 }
 $('addGoal').onclick = () => openGoal(null);
 $('addPrec').onclick = () => { if (S.objectifs.some(g => g.type === 'precaution')) return toast('Tu as déjà un objectif d\'épargne de précaution'); createPrec(); };
-$('gLink').onchange = syncGoalForm;
-$('gBase').onchange = syncGoalForm; $('gSupport').onchange = syncGoalForm;
+$('gDep').onchange = syncGoalForm;
 $('gTarget').addEventListener('input', e => e.target.setCustomValidity(''));
 $('gDeadline').addEventListener('input', e => e.target.setCustomValidity(''));
 $('goalForm').addEventListener('submit', e => {
   e.preventDefault();
   const cible = parseNum($('gTarget').value);
-  if (!cible || cible <= 0){ $('gTarget').setCustomValidity('Indique le capital visé, par exemple 50000'); $('gTarget').reportValidity(); return; }
-  if (idx($('gDeadline').value) < idx(THIS)){ $('gDeadline').setCustomValidity('Choisis une échéance à partir de ce mois'); $('gDeadline').reportValidity(); return; }
-  const data = {label: $('gLabel').value.trim(), cible: String(cible), echeance: $('gDeadline').value, depart: String(parseNum($('gStart').value) || 0),
-    rendement: String(parseNum($('gRate').value) || 0), link: $('gLink').value, base: $('gBase').value, support: $('gSupport').value, manuel: String(parseNum($('gManual').value) || 0)};
+  if (!cible || cible <= 0){ $('gTarget').setCustomValidity('Indique le montant visé, par exemple 6000'); $('gTarget').reportValidity(); return; }
+  const d = depRef($('gDep').value), ech = d ? d.m : $('gDeadline').value;
+  if (!ech || idx(ech) < idx(THIS)){ $('gDeadline').setCustomValidity('Choisis une échéance à partir de ce mois'); $('gDeadline').reportValidity(); return; }
+  const data = {label: $('gLabel').value.trim(), cible: String(cible), echeance: ech, depart: String(parseNum($('gStart').value) || ''), depense: $('gDep').value};
   let g = editingGoal;
   if (g) Object.assign(g, data); else { g = {id: uid(), debut: THIS, ...data}; S.objectifs.push(g); }
   put('objectifs', g.id, body(g));
