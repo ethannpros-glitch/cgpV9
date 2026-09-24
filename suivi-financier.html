@@ -1128,21 +1128,33 @@ $('dReel').onclick = () => { donutMode = 'reel'; renderAll(); };
 function applyEdit(m, k, f, val){
   if (k.startsWith('r:')){
     const rv = S.revenus.find(r => r.id === k.slice(2)); if (!rv) return;
-    if (f === 'done') rv.statut = val ? 'encaisse' : 'avendre';
+    if (f === 'done'){
+      if (val){ if (rv.statut !== 'encaisse') rv.statutAvant = rv.statut || 'avendre'; rv.statut = 'encaisse'; }
+      else { rv.statut = rv.statutAvant && rv.statutAvant !== 'encaisse' ? rv.statutAvant : 'avendre'; delete rv.statutAvant; }
+    }
     else if (f === 'prevu'){ const v = parseNum(val); rv.montant = v == null ? '' : String(v); }
     put('revenus', rv.id, body(rv));
   } else if (f === 'done'){
     const L = monthLines(m); let line = null; for (const s in L){ line = L[s].find(l => l.key === k) || line; }
-    const patch = {done: !!val};
-    if (val && line && line.rawReel == null) patch.reel = line.prevu;
-    setRec(m, k, patch);
+    const rec = ((S.months[m] || {}).recs || {})[k] || {};
+    if (val){
+      // Cocher sans réel saisi : le réel prend le prévu, marqué comme rempli automatiquement
+      const patch = {done: true};
+      if (line && line.rawReel == null){ patch.reel = line.prevu; patch.auto = true; }
+      setRec(m, k, patch);
+    } else {
+      // Décocher annule exactement ce que la coche avait fait
+      const patch = {done: false};
+      if (rec.auto || (line && rec.reel != null && rec.reel === line.prevu)){ patch.reel = null; patch.auto = null; }
+      setRec(m, k, patch);
+    }
   } else {
     let v = parseNum(val);
     if (f === 'prevu'){
       const base = k.startsWith('d:') ? num((S.depenses.find(d => d.id === k.slice(2)) || {}).montant) : num((S.items.find(i => i.id === k) || {}).amount);
       if (v === base) v = null;
     }
-    setRec(m, k, {[f]: v});
+    setRec(m, k, f === 'reel' ? {reel: v, auto: null} : {[f]: v});
   }
 }
 $('p-budget').addEventListener('change', e => {
