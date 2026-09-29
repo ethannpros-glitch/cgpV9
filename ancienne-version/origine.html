@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi financier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16213A; --ink-soft:#3D4A66; --parchment:#F5F2EA; --panel:#FCFBF7;
+    --line:#DAD4C4; --line-soft:#E9E5D9; --brass:#93732C; --brass-soft:#EDE3C8;
+    --green:#4B6B4F; --green-soft:#E4EBE1; --rust:#A23E2E; --rust-soft:#F2E2DE; --slate:#6B7280;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--parchment);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:30px 40px 60px;}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:16px;}
+  .brand{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin:0 0 3px;}
+  .brand-sub{font-size:12.5px;color:var(--slate);margin:0;}
+  .add-btn{border:none;background:var(--ink);color:#fff;border-radius:7px;padding:11px 18px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0;}
+  .add-btn:hover{background:#0F1728;}
+
+  .top-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px;}
+  .top-tab{padding:10px 4px;margin-right:26px;font-size:14px;color:var(--slate);cursor:pointer;border-bottom:2px solid transparent;font-weight:600;}
+  .top-tab.active{color:var(--ink);border-bottom-color:var(--brass);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .cumul{background:var(--ink);color:#fff;border-radius:12px;padding:22px 26px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .cumul .n{font-family:'Fraunces',serif;font-size:34px;font-weight:600;line-height:1;}
+  .cumul .l{font-size:12px;color:#C7CCDA;margin-top:4px;}
+  .cumul-break{display:flex;gap:24px;}
+  .cumul-break div{text-align:right;}
+  .cumul-break .n2{font-family:'Fraunces',serif;font-size:18px;font-weight:600;display:block;}
+  .cumul-break .l2{font-size:11px;color:#9AA3BB;}
+
+  .stats{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+  .stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .stat .n{font-family:'Fraunces',serif;font-size:19px;font-weight:600;display:block;line-height:1.2;}
+  .stat .l{font-size:11px;color:var(--slate);margin-top:2px;}
+  .stat.encaisse .n{color:var(--green);}
+  .stat.avendre .n{color:var(--brass);}
+  .stat.depense .n{color:var(--rust);}
+
+  .filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:11.5px;padding:5px 11px;border-radius:20px;cursor:pointer;user-select:none;}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .select-bar{display:flex;align-items:center;justify-content:space-between;background:var(--brass-soft);border:1px solid var(--brass);border-radius:9px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#7A5E20;font-weight:600;}
+  .row-check, #selectAllRevenus{width:16px;height:16px;cursor:pointer;}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--slate);padding:12px 14px;border-bottom:1px solid var(--line);background:#fff;font-weight:600;}
+  thead th.sortable{cursor:pointer;user-select:none;}
+  thead th.sortable:hover{color:var(--ink);}
+  thead th.sortable .arrow{display:inline-block;margin-left:4px;opacity:0.35;font-size:10px;}
+  thead th.sortable.active .arrow{opacity:1;color:var(--brass);}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#fff;}
+  td input[type=text],td input[type=date]{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:7px 8px;font-family:inherit;font-size:13.5px;color:var(--ink);}
+  td input[type=number]{width:100px;border:1px solid transparent;background:transparent;border-radius:6px;padding:7px 8px;font-family:inherit;font-size:13.5px;color:var(--ink);text-align:right;}
+  td input:hover,td input:focus{border-color:var(--line);background:#fff;}
+  td input:focus{outline:none;border-color:var(--brass);}
+  td select{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 10px;font-family:inherit;font-size:11.5px;color:var(--ink-soft);}
+  .type-pill{border:none;font-weight:600;}
+  .type-pill.pro{background:var(--brass-soft);color:#7A5E20;}
+  .type-pill.perso{background:var(--line-soft);color:var(--ink-soft);}
+  .statut-pill{border:none;font-weight:600;}
+  .statut-pill.avendre{background:var(--line-soft);color:var(--ink-soft);}
+  .statut-pill.vendu{background:#E7E9F2;color:#3D4A8A;}
+  .statut-pill.encaisse{background:var(--green-soft);color:var(--green);}
+  .row-del{border:none;background:none;color:var(--line);cursor:pointer;font-size:17px;padding:4px 8px;}
+  .row-del:hover{color:var(--rust);}
+  .col-montant{text-align:right;font-variant-numeric:tabular-nums;}
+  .empty-row td{padding:36px 14px;text-align:center;color:var(--slate);font-size:13.5px;}
+  .rec-check{display:flex;align-items:center;gap:6px;justify-content:center;}
+  .rec-check input{width:auto !important;}
+
+  .save-note{font-size:11.5px;color:var(--slate);margin-top:16px;}
+  .res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .res-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .res-card input{width:100%;border:1px solid var(--line);border-radius:7px;padding:10px 12px;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--ink);margin-top:6px;}
+  .res-card input:focus{outline:none;border-color:var(--brass);}
+  .verdict-card{border-radius:12px;padding:22px 26px;margin-bottom:20px;border:1px solid var(--line);}
+  .verdict-card.pos{background:var(--green-soft);border-color:var(--green);}
+  .verdict-card.neg{background:var(--rust-soft);border-color:var(--rust);}
+  .verdict-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .verdict-head select{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-family:inherit;color:var(--ink-soft);}
+  .verdict-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin:0;}
+  .verdict-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:4px 10px;border-radius:20px;}
+  .verdict-badge.pos{background:var(--green);color:#fff;}
+  .verdict-badge.neg{background:var(--rust);color:#fff;}
+  .verdict-rows{display:flex;gap:22px;flex-wrap:wrap;}
+  .verdict-rows > div{flex:1;min-width:150px;}
+  .verdict-rows .n{font-family:'Fraunces',serif;font-size:20px;font-weight:600;display:block;}
+  .verdict-rows .l{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .retard-banner{background:var(--rust-soft);border:1px solid var(--rust);border-radius:9px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#7A2E20;align-items:center;}
+
+  /* --- Prévisionnel --- */
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:20px;}
+  .chart-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 2px;}
+  .chart-sub{font-size:12px;color:var(--slate);margin:0 0 16px;}
+  .legend{display:flex;gap:18px;margin-bottom:12px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .forecast-summary{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .fc-stat{flex:1;min-width:170px;border:1px solid var(--line);border-radius:9px;padding:14px 16px;background:#fff;}
+  .fc-stat .n{font-family:'Fraunces',serif;font-size:20px;font-weight:600;display:block;}
+  .fc-stat .l{font-size:11px;color:var(--slate);margin-top:2px;}
+  .fc-stat.pos .n{color:var(--green);}
+  .fc-stat.neg .n{color:var(--rust);}
+  .month-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+  .month-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:20px 22px;}
+  .month-card.is-now{border-color:var(--brass);background:var(--brass-soft);}
+  .month-card h3{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 14px;}
+  .mc-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+  .mc-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;border-top:1px solid var(--line);}
+  .mc-label{font-size:12.5px;color:var(--ink-soft);}
+  .mc-value{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;}
+  .mc-value.entree{color:var(--brass);}
+  .mc-value.sortie{color:var(--rust);}
+  .mc-row:last-child .mc-value{font-family:'Fraunces',serif;font-size:19px;}
+  .mc-value.pos{color:var(--green);}
+  .mc-value.neg{color:var(--rust);}
+  #monthlyTable{min-width:480px;}
+  #monthlyTable th{white-space:nowrap;}
+  #monthlyTable td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  #monthlyTable td:first-child, #monthlyTable th:first-child{text-align:left;}
+  #monthlyTable tr.mt-current td{background:var(--brass-soft);}
+  .mt-neg{color:var(--rust);}
+  .mt-pos{color:var(--green);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <p class="brand">Suivi financier</p>
+      <p class="brand-sub" id="headSub">Revenus, dépenses et prévisionnel</p>
+    </div>
+    <button class="add-btn" id="addBtn">+ Ajouter</button>
+  </div>
+
+  <div class="top-tabs" id="topTabs">
+    <div class="top-tab active" data-tab="revenus">Revenus</div>
+    <div class="top-tab" data-tab="depenses">Dépenses</div>
+    <div class="top-tab" data-tab="ressources">Ressources</div>
+    <div class="top-tab" data-tab="previsionnel">Prévisionnel</div>
+  </div>
+
+  <!-- REVENUS -->
+  <div class="panel active" id="panel-revenus">
+    <div class="cumul">
+      <div><div class="n" id="cumulTotal">0 €</div><div class="l">Cumul total revenus</div></div>
+      <div class="cumul-break">
+        <div><span class="n2" id="cumulPro">0 €</span><span class="l2">Activité pro</span></div>
+        <div><span class="n2" id="cumulPerso">0 €</span><span class="l2">Ventes perso</span></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat avendre"><span class="n" id="statEnCours">0 €</span><span class="l">En cours / attendu</span></div>
+      <div class="stat"><span class="n" id="statVendu">0 €</span><span class="l">Vendu, pas encaissé</span></div>
+      <div class="stat encaisse"><span class="n" id="statEncaisse">0 €</span><span class="l">Déjà encaissé</span></div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="select-bar" id="selectBarRevenus" style="display:none;">
+      <span id="selectBarText"></span>
+      <button class="chip" id="clearSelectionBtn" style="cursor:pointer;">Désélectionner tout</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:26px"><input type="checkbox" id="selectAllRevenus"></th>
+        <th class="sortable" data-sort-rev="libelle" style="width:32%">Libellé <span class="arrow">↕</span></th><th style="width:10%">Type</th><th style="width:10%">Catégorie</th>
+        <th class="sortable" data-sort-rev="montant" style="width:10%">Montant <span class="arrow">↕</span></th><th style="width:11%">Statut</th><th class="sortable" data-sort-rev="date" style="width:10%">Date <span class="arrow">↕</span></th>
+        <th style="width:8%">Note</th><th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbodyRevenus"></tbody>
+    </table>
+    <p class="save-note" id="saveNoteRevenus"></p>
+  </div>
+
+  <!-- DEPENSES -->
+  <div class="panel" id="panel-depenses">
+    <div class="stats">
+      <div class="stat depense"><span class="n" id="depTotalMois">0 €</span><span class="l">Dépenses du mois en cours</span></div>
+      <div class="stat depense"><span class="n" id="depRecurrentes">0 €</span><span class="l">Récurrentes mensuelles</span></div>
+      <div class="stat"><span class="n" id="depPonctuelles">0 €</span><span class="l">Ponctuelles à venir</span></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th class="sortable" data-sort-dep="libelle" style="width:32%">Libellé <span class="arrow">↕</span></th><th style="width:11%">Catégorie</th><th class="sortable" data-sort-dep="montant" style="width:10%">Montant <span class="arrow">↕</span></th>
+        <th style="width:11%">Récurrente</th><th class="sortable" data-sort-dep="date" style="width:11%">Date <span class="arrow">↕</span></th>
+        <th style="width:11%">Ce mois-ci</th><th style="width:8%">Note</th><th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbodyDepenses"></tbody>
+    </table>
+    <p class="save-note" id="saveNoteDepenses"></p>
+  </div>
+
+  <!-- RESSOURCES -->
+  <div class="panel" id="panel-ressources">
+    <p class="chart-sub" style="margin-bottom:16px;max-width:680px;">
+      Ce que tu as déjà en main aujourd'hui. Ce total sert de point de départ au prévisionnel — sans ça, le cumul projeté part de zéro au lieu de partir de ta trésorerie réelle.
+    </p>
+    <div class="res-grid">
+      <div class="res-card">
+        <label class="field-label">Compte courant (ce mois)</label>
+        <input type="number" id="resCc" placeholder="0">
+      </div>
+      <div class="res-card">
+        <label class="field-label">Épargne</label>
+        <input type="number" id="resEpargne" placeholder="0">
+      </div>
+      <div class="res-card">
+        <label class="field-label">Autres liquidités</label>
+        <input type="number" id="resAutres" placeholder="0">
+      </div>
+    </div>
+    <div class="cumul" style="margin-top:18px;">
+      <div><div class="n" id="resTotal">0 €</div><div class="l">Total des ressources actuelles</div></div>
+    </div>
+    <p class="save-note" id="saveNoteRessources"></p>
+  </div>
+
+  <!-- PREVISIONNEL -->
+  <div class="panel" id="panel-previsionnel">
+    <p class="chart-sub" style="margin-bottom:16px;max-width:680px;">
+      <strong>Entrées</strong> = revenus datés sur ce mois. <strong>Sorties</strong> = dépenses récurrentes + dépenses ponctuelles datées sur ce mois.
+      Une ligne sans date n'apparaît dans aucun mois ci-dessous.
+    </p>
+
+    <div class="retard-banner" id="retardBanner" style="display:none;"></div>
+
+    <div class="verdict-card" id="verdictCard">
+      <div class="verdict-head">
+        <p class="verdict-title" id="verdictTitle">Sur les 3 prochains mois</p>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="verdict-badge" id="verdictBadge"></span>
+          <select id="periodeSelect">
+            <option value="1">1 mois</option>
+            <option value="3" selected>3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12">12 mois</option>
+          </select>
+        </div>
+      </div>
+      <div class="verdict-rows">
+        <div><span class="n" id="vRessources">0 €</span><span class="l">Ressources de départ</span></div>
+        <div><span class="n" id="vEntrees">0 €</span><span class="l">Entrées prévues sur la période</span></div>
+        <div><span class="n" id="vSorties">0 €</span><span class="l">Sorties prévues sur la période</span></div>
+        <div><span class="n" id="vSolde">0 €</span><span class="l">Solde projeté en fin de période</span></div>
+      </div>
+    </div>
+
+    <div class="month-cards" id="monthCards"></div>
+
+    <div class="forecast-summary" id="forecastSummary"></div>
+    <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+      <label style="font-size:12px;color:var(--slate)">Horizon prévisionnel :</label>
+      <select id="horizonSelect" class="status-select" style="border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-family:inherit;color:var(--ink-soft);">
+        <option value="6">6 mois</option>
+        <option value="12" selected>12 mois</option>
+        <option value="24">24 mois</option>
+      </select>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Entrées vs sorties par mois</p>
+      <p class="chart-sub">3 derniers mois, mois en cours, et mois de prévisionnel</p>
+      <div class="legend">
+        <span><i style="background:var(--brass)"></i>Entrées</span>
+        <span><i style="background:var(--rust)"></i>Sorties</span>
+      </div>
+      <div id="barChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Détail mois par mois</p>
+      <p class="chart-sub">Solde du mois = entrées − sorties de ce mois, indépendamment des autres mois. Aucun report d'un mois sur l'autre.</p>
+      <div style="overflow-x:auto">
+        <table id="monthlyTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TYPES = [["pro","Activité pro"],["perso","Vente perso"]];
+const STATUTS = [["avendre","En cours / attendu"],["vendu","Vendu"],["encaisse","Encaissé"]];
+
+let data = { revenus: null, depenses: null, ressources: {cc:"", epargne:"", autres:""} };
+let typeFilter = "tous";
+let currentTab = "revenus";
+let forecastHorizon = 12;
+let periodeAnalyse = 3;
+let db = null;
+let dbReady = false;
+let pendingWrites = {};
+let revSort = {field:null, dir:'asc'};
+let selectedRevenus = new Set();
+
+function updateSelectBar(){
+  const bar = document.getElementById('selectBarRevenus');
+  const filtered = getFilteredRevenus();
+  const selectedInView = filtered.filter(l=>selectedRevenus.has(l.id));
+  if(selectedInView.length===0){
+    bar.style.display = "none";
+    return;
+  }
+  const total = selectedInView.reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  bar.style.display = "flex";
+  document.getElementById('selectBarText').textContent =
+    `${selectedInView.length} ligne${selectedInView.length>1?'s':''} sélectionnée${selectedInView.length>1?'s':''} — Total : ${fmtEUR(total)}`;
+}
+document.getElementById('clearSelectionBtn').onclick = () => {
+  selectedRevenus.clear();
+  renderRevenus();
+};
+document.getElementById('selectAllRevenus').onchange = e => {
+  const filtered = getFilteredRevenus();
+  if(e.target.checked) filtered.forEach(l=>selectedRevenus.add(l.id));
+  else filtered.forEach(l=>selectedRevenus.delete(l.id));
+  renderRevenus();
+};
+let depSort = {field:null, dir:'asc'};
+
+function applySort(list, sort){
+  if(!sort.field) return list;
+  const arr = [...list];
+  arr.sort((a,b)=>{
+    let va = a[sort.field], vb = b[sort.field];
+    let cmp;
+    if(sort.field==="montant"){
+      cmp = (parseFloat(va)||0) - (parseFloat(vb)||0);
+    } else if(sort.field==="date"){
+      cmp = (va||"").localeCompare(vb||"");
+    } else {
+      cmp = (va||"").toLowerCase().localeCompare((vb||"").toLowerCase());
+    }
+    return sort.dir==="asc" ? cmp : -cmp;
+  });
+  return arr;
+}
+
+function updateSortHeaders(prefix, sort){
+  document.querySelectorAll(`[data-sort-${prefix}]`).forEach(th=>{
+    const field = th.dataset[prefix==='rev'?'sortRev':'sortDep'];
+    const arrow = th.querySelector('.arrow');
+    if(field===sort.field){
+      th.classList.add('active');
+      arrow.textContent = sort.dir==="asc" ? "↑" : "↓";
+    } else {
+      th.classList.remove('active');
+      arrow.textContent = "↕";
+    }
+  });
+}
+
+document.querySelectorAll('[data-sort-rev]').forEach(th=>{
+  th.onclick = ()=>{
+    const field = th.dataset.sortRev;
+    revSort.dir = (revSort.field===field && revSort.dir==="asc") ? "desc" : "asc";
+    revSort.field = field;
+    renderRevenus();
+  };
+});
+document.querySelectorAll('[data-sort-dep]').forEach(th=>{
+  th.onclick = ()=>{
+    const field = th.dataset.sortDep;
+    depSort.dir = (depSort.field===field && depSort.dir==="asc") ? "desc" : "asc";
+    depSort.field = field;
+    renderDepenses();
+  };
+});
+
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function fmtEUR(n){
+  n = parseFloat(n) || 0;
+  return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+}
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function localMonthKey(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
+}
+function setNotes(text){
+  ["saveNoteRevenus","saveNoteDepenses"].forEach(id=>{
+    const n = document.getElementById(id);
+    if(n) n.textContent = text;
+  });
+}
+
+/* ---------- DB (individual writes, no page reload) ---------- */
+async function ensureDb(){
+  if(db) return db;
+  db = await claude.use("db");
+  return db;
+}
+
+function scheduleWrite(collection, id, patch){
+  const key = collection+":"+id;
+  if(!pendingWrites[key]) pendingWrites[key] = {patch:{}, timer:null};
+  Object.assign(pendingWrites[key].patch, patch);
+  setNotes("Enregistrement…");
+  if(pendingWrites[key].timer) clearTimeout(pendingWrites[key].timer);
+  pendingWrites[key].timer = setTimeout(async ()=>{
+    const p = pendingWrites[key].patch;
+    delete pendingWrites[key];
+    try{
+      const d = await ensureDb();
+      if(!d){ setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée."); return; }
+      await d.collection(collection).doc(id).update(p);
+      setNotes("Enregistré.");
+    }catch(e){
+      setNotes("Échec de l'enregistrement — réessaie.");
+    }
+  }, 400);
+}
+
+async function dbCreate(collection, id, item){
+  try{
+    const d = await ensureDb();
+    if(!d){ setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée."); return; }
+    await d.collection(collection).doc(id).set(item);
+    setNotes("Enregistré.");
+  }catch(e){
+    setNotes("Échec de l'enregistrement — réessaie.");
+  }
+}
+
+async function dbDelete(collection, id){
+  try{
+    const d = await ensureDb();
+    if(!d) return;
+    await d.collection(collection).doc(id).delete();
+  }catch(e){ /* ignore */ }
+}
+
+async function loadFromDb(){
+  const d = await ensureDb();
+  if(!d){
+    setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée pour que ça s'enregistre.");
+    dbReady = false;
+    return;
+  }
+  try{
+    const [revSnap, depSnap, resDoc] = await Promise.all([
+      d.collection("revenus").get(),
+      d.collection("depenses").get(),
+      d.collection("ressources").doc("main").get().catch(()=>null)
+    ]);
+    data.revenus = revSnap.docs.map(s => ({ id: s.id, ...s.data() }));
+    data.depenses = depSnap.docs.map(s => ({ id: s.id, ...s.data() }));
+    if(resDoc) data.ressources = { cc: resDoc.data().cc||"", epargne: resDoc.data().epargne||"", autres: resDoc.data().autres||"" };
+    dbReady = true;
+  }catch(e){
+    setNotes("Échec du chargement des données.");
+  }
+  renderRevenus();
+  renderDepenses();
+  renderRessources();
+}
+
+function totalRessources(){
+  const r = data.ressources || {};
+  return (parseFloat(r.cc)||0) + (parseFloat(r.epargne)||0) + (parseFloat(r.autres)||0);
+}
+
+function renderRessources(){
+  document.getElementById('resCc').value = data.ressources.cc || "";
+  document.getElementById('resEpargne').value = data.ressources.epargne || "";
+  document.getElementById('resAutres').value = data.ressources.autres || "";
+  document.getElementById('resTotal').textContent = fmtEUR(totalRessources());
+}
+
+function updateRessource(field, value){
+  data.ressources[field] = value;
+  document.getElementById('resTotal').textContent = fmtEUR(totalRessources());
+  const note = document.getElementById('saveNoteRessources');
+  if(note) note.textContent = "Enregistrement…";
+  const key = "ressources:main";
+  if(!pendingWrites[key]) pendingWrites[key] = {timer:null};
+  if(pendingWrites[key].timer) clearTimeout(pendingWrites[key].timer);
+  pendingWrites[key].timer = setTimeout(async ()=>{
+    delete pendingWrites[key];
+    try{
+      const d = await ensureDb();
+      if(!d){ if(note) note.textContent = "Sauvegarde indisponible dans cet aperçu."; return; }
+      await d.collection("ressources").doc("main").set({...data.ressources});
+      if(note) note.textContent = "Enregistré.";
+    }catch(e){
+      if(note) note.textContent = "Échec de l'enregistrement — réessaie.";
+    }
+  }, 400);
+}
+document.getElementById('resCc').oninput = e => updateRessource('cc', e.target.value);
+document.getElementById('resEpargne').oninput = e => updateRessource('epargne', e.target.value);
+document.getElementById('resAutres').oninput = e => updateRessource('autres', e.target.value);
+
+/* ---------- Tabs ---------- */
+document.getElementById('topTabs').querySelectorAll('.top-tab').forEach(t=>{
+  t.onclick = ()=>{
+    currentTab = t.dataset.tab;
+    document.querySelectorAll('.top-tab').forEach(x=>x.classList.toggle('active', x===t));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+currentTab).classList.add('active');
+    document.getElementById('addBtn').style.display = (currentTab==="previsionnel"||currentTab==="ressources") ? "none" : "";
+    if(currentTab==="previsionnel") renderForecast();
+  };
+});
+document.getElementById('addBtn').onclick = ()=>{
+  if(currentTab==="revenus") addRevenu();
+  if(currentTab==="depenses") addDepense();
+};
+
+/* ========== REVENUS ========== */
+function addRevenu(){
+  data.revenus = data.revenus || [];
+  const item = {id:uid(), libelle:"", type:"perso", categorie:"", montant:"", statut:"avendre", date:"", note:""};
+  data.revenus.unshift(item);
+  renderRevenus();
+  const {id, ...fields} = item;
+  dbCreate("revenus", id, fields);
+}
+function delRevenu(id){
+  data.revenus = (data.revenus||[]).filter(l=>l.id!==id);
+  selectedRevenus.delete(id);
+  renderRevenus();
+  dbDelete("revenus", id);
+}
+function updateRevenu(id, patch){
+  const l = (data.revenus||[]).find(l=>l.id===id);
+  if(!l) return;
+  Object.assign(l, patch);
+  scheduleWrite("revenus", id, patch);
+}
+function getFilteredRevenus(){
+  const revenus = data.revenus || [];
+  const filtered = typeFilter==="tous" ? revenus : revenus.filter(l=>l.type===typeFilter);
+  return applySort(filtered, revSort);
+}
+function renderRevenusStats(){
+  const lignes = data.revenus || [];
+  const total = lignes.reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const totalPro = lignes.filter(l=>l.type==="pro").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const totalPerso = lignes.filter(l=>l.type==="perso").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const enCours = lignes.filter(l=>l.statut==="avendre").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const vendu = lignes.filter(l=>l.statut==="vendu").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const encaisse = lignes.filter(l=>l.statut==="encaisse").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  document.getElementById('cumulTotal').textContent = fmtEUR(total);
+  document.getElementById('cumulPro').textContent = fmtEUR(totalPro);
+  document.getElementById('cumulPerso').textContent = fmtEUR(totalPerso);
+  document.getElementById('statEnCours').textContent = fmtEUR(enCours);
+  document.getElementById('statVendu').textContent = fmtEUR(vendu);
+  document.getElementById('statEncaisse').textContent = fmtEUR(encaisse);
+}
+function renderRevenus(){
+  renderRevenusStats();
+  updateSortHeaders('rev', revSort);
+  const filtersEl = document.getElementById('filters');
+  filtersEl.innerHTML = "";
+  [["tous","Tous"],...TYPES].forEach(([k,label])=>{
+    const chip = document.createElement('div');
+    chip.className = "chip" + (typeFilter===k?" active":"");
+    chip.textContent = label;
+    chip.onclick = ()=>{ typeFilter = k; renderRevenus(); };
+    filtersEl.appendChild(chip);
+  });
+  const tbody = document.getElementById('tbodyRevenus');
+  const filtered = getFilteredRevenus();
+  if(data.revenus===null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Chargement…</td></tr>`;
+    document.getElementById('selectBarRevenus').style.display = "none";
+    return;
+  }
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Aucune ligne. Clique sur « + Ajouter ».</td></tr>`;
+    document.getElementById('selectBarRevenus').style.display = "none";
+    return;
+  }
+  tbody.innerHTML = filtered.map(l=>`
+    <tr data-id="${l.id}">
+      <td><input type="checkbox" class="row-check" ${selectedRevenus.has(l.id)?'checked':''}></td>
+      <td><input type="text" class="f-libelle" placeholder="Ex : Commission Dupont, lingot 10g…" value="${escapeHtml(l.libelle)}"></td>
+      <td><select class="f-type type-pill ${l.type}">${TYPES.map(([k,lab])=>`<option value="${k}" ${k===l.type?'selected':''}>${lab}</option>`).join("")}</select></td>
+      <td><input type="text" class="f-categorie" placeholder="Or, Vinted, client…" value="${escapeHtml(l.categorie)}"></td>
+      <td class="col-montant"><input type="number" class="f-montant" placeholder="0" value="${l.montant}"></td>
+      <td><select class="f-statut statut-pill ${l.statut}">${STATUTS.map(([k,lab])=>`<option value="${k}" ${k===l.statut?'selected':''}>${lab}</option>`).join("")}</select></td>
+      <td><input type="date" class="f-date" value="${l.date||''}"></td>
+      <td><input type="text" class="f-note" placeholder="—" value="${escapeHtml(l.note)}"></td>
+      <td><button class="row-del">×</button></td>
+    </tr>`).join("");
+  document.getElementById('selectAllRevenus').checked = filtered.length>0 && filtered.every(l=>selectedRevenus.has(l.id));
+  updateSelectBar();
+  tbody.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id = tr.dataset.id;
+    tr.querySelector('.row-check').onchange = e => {
+      if(e.target.checked) selectedRevenus.add(id); else selectedRevenus.delete(id);
+      updateSelectBar();
+      document.getElementById('selectAllRevenus').checked = filtered.every(l=>selectedRevenus.has(l.id));
+    };
+    tr.querySelector('.f-libelle').oninput = e => updateRevenu(id,{libelle:e.target.value});
+    tr.querySelector('.f-type').onchange = e => { updateRevenu(id,{type:e.target.value}); renderRevenus(); };
+    tr.querySelector('.f-categorie').oninput = e => updateRevenu(id,{categorie:e.target.value});
+    tr.querySelector('.f-montant').oninput = e => { updateRevenu(id,{montant:e.target.value}); renderRevenusStats(); updateSelectBar(); };
+    tr.querySelector('.f-statut').onchange = e => { updateRevenu(id,{statut:e.target.value}); renderRevenus(); };
+    tr.querySelector('.f-date').onchange = e => updateRevenu(id,{date:e.target.value});
+    tr.querySelector('.f-note').oninput = e => updateRevenu(id,{note:e.target.value});
+    tr.querySelector('.row-del').onclick = () => delRevenu(id);
+  });
+}
+
+/* ========== DEPENSES ========== */
+function addDepense(){
+  data.depenses = data.depenses || [];
+  const item = {id:uid(), libelle:"", categorie:"", montant:"", recurrente:false, date:"", avancee:false, note:""};
+  data.depenses.unshift(item);
+  renderDepenses();
+  const {id, ...fields} = item;
+  dbCreate("depenses", id, fields);
+}
+function delDepense(id){
+  data.depenses = (data.depenses||[]).filter(l=>l.id!==id);
+  renderDepenses();
+  dbDelete("depenses", id);
+}
+function updateDepense(id, patch){
+  const l = (data.depenses||[]).find(l=>l.id===id);
+  if(!l) return;
+  Object.assign(l, patch);
+  scheduleWrite("depenses", id, patch);
+}
+function monthKey(d){ return d ? d.slice(0,7) : null; }
+function renderDepensesStats(){
+  const depenses = data.depenses || [];
+  const now = new Date();
+  const curKey = localMonthKey(now);
+  const recurrentes = depenses.filter(d=>d.recurrente && (!d.date || d.date.slice(0,7) <= curKey)).reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  const ponctuellesAVenir = depenses.filter(d=>!d.recurrente && d.date && d.date.slice(0,7) >= curKey)
+    .reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  const moisEnCours = recurrentes + depenses.filter(d=>!d.recurrente && (d.avancee || monthKey(d.date)===curKey)).reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  document.getElementById('depTotalMois').textContent = fmtEUR(moisEnCours);
+  document.getElementById('depRecurrentes').textContent = fmtEUR(recurrentes);
+  document.getElementById('depPonctuelles').textContent = fmtEUR(ponctuellesAVenir);
+}
+function renderDepenses(){
+  renderDepensesStats();
+  updateSortHeaders('dep', depSort);
+  const tbody = document.getElementById('tbodyDepenses');
+  if(data.depenses===null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Chargement…</td></tr>`;
+    return;
+  }
+  const sorted = applySort(data.depenses, depSort);
+  if(sorted.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Aucune dépense. Clique sur « + Ajouter ».</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sorted.map(l=>`
+    <tr data-id="${l.id}">
+      <td><input type="text" class="f-libelle" placeholder="Ex : Loyer bureau, assurance…" value="${escapeHtml(l.libelle)}"></td>
+      <td><input type="text" class="f-categorie" placeholder="Fixe, pro, perso…" value="${escapeHtml(l.categorie)}"></td>
+      <td class="col-montant"><input type="number" class="f-montant" placeholder="0" value="${l.montant}"></td>
+      <td><label class="rec-check"><input type="checkbox" class="f-recurrente" ${l.recurrente?'checked':''}> Mensuelle</label></td>
+      <td><input type="date" class="f-date" value="${l.date||''}" title="Pour une récurrente : mois de démarrage. Vide = comptée depuis toujours." ${l.recurrente?'':''}></td>
+      <td><label class="rec-check" title="Compte dans le mois en cours pour le calcul, sans changer la date ci-dessus."><input type="checkbox" class="f-avancee" ${l.avancee?'checked':''} ${l.recurrente?'disabled':''}> Avancée</label></td>
+      <td><input type="text" class="f-note" placeholder="—" value="${escapeHtml(l.note)}"></td>
+      <td><button class="row-del">×</button></td>
+    </tr>`).join("");
+  tbody.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id = tr.dataset.id;
+    tr.querySelector('.f-libelle').oninput = e => updateDepense(id,{libelle:e.target.value});
+    tr.querySelector('.f-categorie').oninput = e => updateDepense(id,{categorie:e.target.value});
+    tr.querySelector('.f-montant').oninput = e => { updateDepense(id,{montant:e.target.value}); renderDepensesStats(); };
+    tr.querySelector('.f-recurrente').onchange = e => { updateDepense(id,{recurrente:e.target.checked}); renderDepenses(); };
+    tr.querySelector('.f-date').onchange = e => updateDepense(id,{date:e.target.value});
+    tr.querySelector('.f-avancee').onchange = e => { updateDepense(id,{avancee:e.target.checked}); renderDepensesStats(); };
+    tr.querySelector('.f-note').oninput = e => updateDepense(id,{note:e.target.value});
+    tr.querySelector('.row-del').onclick = () => delDepense(id);
+  });
+}
+
+/* ========== PREVISIONNEL ========== */
+function monthsRange(nBack, nFwd){
+  const now = new Date();
+  const arr = [];
+  for(let i=-nBack; i<=nFwd; i++){
+    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+    arr.push({
+      key: localMonthKey(d),
+      label: d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),
+      isCurrent: i===0
+    });
+  }
+  return arr;
+}
+
+function computeMonthly(){
+  const months = monthsRange(3, Math.max(forecastHorizon, periodeAnalyse));
+  const revProByKey = {}, revPersoByKey = {}, revEncaisseByKey = {};
+  (data.revenus||[]).forEach(l=>{
+    if(!l.date) return;
+    const k = l.date.slice(0,7);
+    const bucket = l.type==="pro" ? revProByKey : revPersoByKey;
+    bucket[k] = (bucket[k]||0) + (parseFloat(l.montant)||0);
+    if(l.statut==="encaisse"){
+      revEncaisseByKey[k] = (revEncaisseByKey[k]||0) + (parseFloat(l.montant)||0);
+    }
+  });
+  const recurringItems = (data.depenses||[]).filter(d=>d.recurrente);
+  function recurringDepFor(monthKeyStr){
+    return recurringItems
+      .filter(d => !d.date || d.date.slice(0,7) <= monthKeyStr)
+      .reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  }
+  const depPonctByKey = {};
+  const curKeyNow = localMonthKey(new Date());
+  (data.depenses||[]).filter(d=>!d.recurrente && d.date).forEach(d=>{
+    const k = d.avancee ? curKeyNow : d.date.slice(0,7);
+    depPonctByKey[k] = (depPonctByKey[k]||0) + (parseFloat(d.montant)||0);
+  });
+  const currentIdx = months.findIndex(m=>m.isCurrent);
+  return months.map((m,i)=>{
+    const revPro = revProByKey[m.key] || 0;
+    const revPerso = revPersoByKey[m.key] || 0;
+    const rev = revPro + revPerso;
+    const revEncaisse = revEncaisseByKey[m.key] || 0;
+    const revEnAttente = rev - revEncaisse;
+    const retard = i <= currentIdx && revEnAttente > 0.5;
+    const depPonct = depPonctByKey[m.key] || 0;
+    const recurringDep = recurringDepFor(m.key);
+    const dep = depPonct + recurringDep;
+    const net = rev - dep;
+    return {...m, revPro, revPerso, rev, revEncaisse, revEnAttente, retard, depRec: recurringDep, depPonct, dep, net};
+  });
+}
+
+function renderForecast(){
+  const months = computeMonthly();
+  const currentIdx = months.findIndex(m=>m.isCurrent);
+
+  renderVerdict(months, currentIdx);
+  renderRetardBanner(months, currentIdx);
+  renderMonthCards(months, currentIdx);
+
+  const futureMonths = months.slice(currentIdx+1);
+  const revFuture = futureMonths.reduce((s,m)=>s+m.rev,0);
+  const depFuture = futureMonths.reduce((s,m)=>s+m.dep,0);
+  const netFuture = revFuture - depFuture;
+  const revHorizon = months.reduce((s,m)=>s+m.rev,0);
+  const depHorizon = months.reduce((s,m)=>s+m.dep,0);
+  const netHorizon = revHorizon - depHorizon;
+
+  const summaryEl = document.getElementById('forecastSummary');
+  summaryEl.innerHTML = `
+    <div class="fc-stat ${netFuture>=0?'pos':'neg'}"><span class="n">${fmtEUR(netFuture)}</span><span class="l">Solde net, ${forecastHorizon} prochains mois (hors mois en cours)</span></div>
+    <div class="fc-stat"><span class="n">${fmtEUR(depFuture)}</span><span class="l">Sorties attendues, ${forecastHorizon} prochains mois</span></div>
+    <div class="fc-stat ${netHorizon>=0?'pos':'neg'}"><span class="n">${fmtEUR(netHorizon)}</span><span class="l">Somme des soldes mensuels sur toute la période affichée (mois par mois, sans report)</span></div>
+  `;
+  document.querySelectorAll('.chart-sub')[1].textContent = `3 derniers mois, mois en cours, et ${forecastHorizon} mois de prévisionnel`;
+
+  drawBarChart(months);
+  drawMonthlyTable(months);
+}
+
+function renderRetardBanner(months, currentIdx){
+  const pastAndNow = months.slice(0, currentIdx+1);
+  const enRetard = pastAndNow.filter(m=>m.retard);
+  const totalRetard = enRetard.reduce((s,m)=>s+m.revEnAttente,0);
+  const el = document.getElementById('retardBanner');
+  if(totalRetard <= 0.5){
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "flex";
+  const detail = enRetard.map(m=>`${m.label} (${fmtEUR(m.revEnAttente)})`).join(", ");
+  el.innerHTML = `
+    <span>⚠️ <strong>${fmtEUR(totalRetard)}</strong> attendus sur des mois déjà passés ou en cours n'ont pas été marqués « Encaissé » — vérifie ces lignes dans Revenus : ${detail}.</span>
+  `;
+}
+
+function renderVerdict(months, currentIdx){
+  const periodMonths = months.slice(currentIdx, currentIdx + periodeAnalyse);
+  const entrees = periodMonths.reduce((s,m)=>s+m.rev,0);
+  const sorties = periodMonths.reduce((s,m)=>s+m.dep,0);
+  const ressources = totalRessources();
+  const soldeProjete = ressources + entrees - sorties;
+  const cashflowPeriode = entrees - sorties;
+  const positif = soldeProjete >= 0;
+
+  document.getElementById('verdictTitle').textContent = `Sur ${periodeAnalyse===1?'le mois prochain':'les '+periodeAnalyse+' prochains mois'} (dès maintenant)`;
+  document.getElementById('verdictCard').className = "verdict-card " + (positif?'pos':'neg');
+  document.getElementById('verdictBadge').className = "verdict-badge " + (positif?'pos':'neg');
+  document.getElementById('verdictBadge').textContent = positif ? "Cash-flow couvert" : "Cash-flow insuffisant";
+  document.getElementById('vRessources').textContent = fmtEUR(ressources);
+  document.getElementById('vEntrees').textContent = fmtEUR(entrees);
+  document.getElementById('vSorties').textContent = fmtEUR(sorties);
+  document.getElementById('vSolde').textContent = fmtEUR(soldeProjete);
+}
+
+function renderMonthCards(months, currentIdx){
+  const now = months[currentIdx];
+  const next = months[currentIdx+1];
+  function cardHtml(m, title, isNow){
+    if(!m) return `<div class="month-card"><h3>${title}</h3><p style="color:var(--slate);font-size:13px;">Hors de l'horizon affiché.</p></div>`;
+    return `
+      <div class="month-card ${isNow?'is-now':''}">
+        <h3>${title} — ${m.label}</h3>
+        <div class="mc-row"><span class="mc-label">Entrées attendues (pro + perso)</span><span class="mc-value entree">${fmtEUR(m.rev)}</span></div>
+        <div class="mc-row" style="padding-left:14px;border-bottom:none;"><span class="mc-label" style="font-size:11.5px;">↳ dont déjà encaissé</span><span class="mc-value" style="font-size:12.5px;color:var(--green);">${fmtEUR(m.revEncaisse)}</span></div>
+        <div class="mc-row" style="padding-left:14px;"><span class="mc-label" style="font-size:11.5px;">↳ encore attendu${m.retard?' ⚠️':''}</span><span class="mc-value" style="font-size:12.5px;color:${m.retard?'var(--rust)':'var(--ink-soft)'};">${fmtEUR(m.revEnAttente)}</span></div>
+        <div class="mc-row"><span class="mc-label">Sorties attendues (récurrentes + ponctuelles)</span><span class="mc-value sortie">${fmtEUR(m.dep)}</span></div>
+        <div class="mc-row"><span class="mc-label">Solde du mois (entrées − sorties de ce mois seul)</span><span class="mc-value ${m.net>=0?'pos':'neg'}">${fmtEUR(m.net)}</span></div>
+      </div>`;
+  }
+  document.getElementById('monthCards').innerHTML =
+    cardHtml(now, "Ce mois-ci", true) + cardHtml(next, "Mois prochain", false);
+}
+
+function drawMonthlyTable(months){
+  const rows = months.map(m=>`
+    <tr class="${m.isCurrent?'mt-current':''}">
+      <td>${m.label}${m.isCurrent?' (en cours)':''}${m.retard?' ⚠️':''}</td>
+      <td class="mt-pos">${fmtEUR(m.rev)}</td>
+      <td class="mt-neg">${fmtEUR(m.dep)}</td>
+      <td class="${m.net>=0?'mt-pos':'mt-neg'}">${fmtEUR(m.net)}</td>
+    </tr>`).join("");
+  document.getElementById('monthlyTable').innerHTML = `
+    <thead><tr>
+      <th>Mois</th><th>Total entrées</th><th>Total sorties</th>
+      <th>Solde du mois</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function drawBarChart(months){
+  const w = Math.max(600, months.length*80);
+  const h = 240, padBottom = 34, padTop = 14;
+  const maxVal = Math.max(1, ...months.map(m=>Math.max(m.rev, m.dep)));
+  const bandW = w / months.length;
+  const barW = Math.min(22, bandW*0.28);
+  const scale = (h - padTop - padBottom) / maxVal;
+
+  let bars = "";
+  months.forEach((m,i)=>{
+    const cx = bandW*i + bandW/2;
+    const revH = m.rev*scale, depH = m.dep*scale;
+    const y0 = h - padBottom;
+    bars += `<rect x="${cx-barW-3}" y="${y0-revH}" width="${barW}" height="${revH}" rx="3" fill="var(--brass)"></rect>`;
+    bars += `<rect x="${cx+3}" y="${y0-depH}" width="${barW}" height="${depH}" rx="3" fill="var(--rust)"></rect>`;
+    bars += `<text x="${cx}" y="${h-12}" text-anchor="middle" font-size="11" fill="var(--slate)" font-family="Inter">${m.label}</text>`;
+    if(m.isCurrent){
+      bars += `<line x1="${bandW*i}" y1="${padTop}" x2="${bandW*i}" y2="${y0}" stroke="var(--line)" stroke-dasharray="3,3"></line>`;
+    }
+  });
+  document.getElementById('barChart').innerHTML =
+    `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="${h-padBottom}" x2="${w}" y2="${h-padBottom}" stroke="var(--line)"></line>
+      ${bars}
+    </svg>`;
+}
+
+function renderAll(){
+  renderRevenus();
+  renderDepenses();
+}
+
+document.getElementById('horizonSelect').onchange = e => {
+  forecastHorizon = parseInt(e.target.value);
+  renderForecast();
+};
+document.getElementById('periodeSelect').onchange = e => {
+  periodeAnalyse = parseInt(e.target.value);
+  renderForecast();
+};
+
+renderRevenus();
+renderDepenses();
+renderRessources();
+loadFromDb();
+</script>
+</body>
+</html>

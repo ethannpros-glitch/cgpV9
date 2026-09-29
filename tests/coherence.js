@@ -2,7 +2,7 @@ const { chromium } = require('playwright');const fs=require('fs');
 const N=s=>{if(s==null)return NaN;s=String(s).replace(/[\s  €+]/g,'').replace('−','-').replace(',','.');return s===''||s==='—'?0:parseFloat(s)};
 (async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'}).catch(()=>chromium.launch());
 const p=await b.newPage({viewport:{width:1300,height:1400}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(s=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_tab','previsionnel');localStorage.setItem('sf_simple_vu','1')},fs.readFileSync(process.argv[2],'utf8'));
+await p.addInitScript(s=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_view','new');localStorage.setItem('sf_tab','previsionnel')},fs.readFileSync(process.argv[2],'utf8'));
 await p.goto('file://'+require('path').resolve(__dirname,'../suivi-financier.html'));await p.waitForTimeout(500);
 const fails=[];
 if(process.env.MUT){
@@ -79,32 +79,11 @@ if(process.env.MUT){
   await p.evaluate(()=>{window.__keep=1});
   const stored=await p.evaluate(()=>localStorage.getItem('suivi_financier_local_v1'));
   const p2=await b.newPage({viewport:{width:1300,height:1400}});p2.on('pageerror',e=>errs.push('rechargement: '+e.message));
-  await p2.addInitScript(s=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_tab','previsionnel');localStorage.setItem('sf_simple_vu','1')},stored);
+  await p2.addInitScript(s=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_view','new');localStorage.setItem('sf_tab','previsionnel')},stored);
   await p2.goto('file://'+require('path').resolve(__dirname,'../suivi-financier.html'));await p2.waitForTimeout(500);
   await p2.selectOption('#horizon','24');await p2.waitForTimeout(150);
   const after=await p2.$eval('#mtable',e=>e.innerText);
   chk(before===after,'rechargement : le prévisionnel change après rechargement (une action n\'a pas été enregistrée)');
   const doneBefore=await p.evaluate(()=>0);
-}
-// 10. Vue simple : doit refléter exactement les revenus et dépenses saisis
-{
-  const data=JSON.parse(await p.evaluate(()=>localStorage.getItem('suivi_financier_local_v1')));
-  const rev=Object.values(data.revenus||{}), dep=Object.values(data.depenses||{});
-  const n=v=>parseFloat(String(v||'').replace(',','.'))||0;
-  await p.click('[data-tab=simple]');await p.waitForTimeout(150);
-  const pend=rev.filter(r=>r.statut!=='encaisse').reduce((a,r)=>a+n(r.montant),0);
-  chk(Math.abs(N(await p.$eval('#sInTot',e=>e.textContent.replace('au total','')))-pend)<=2,`vue simple : « ce qui doit rentrer » ≠ revenus non encaissés (${pend})`);
-  const now=new Date(), mk=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const revM=rev.filter(r=>r.date&&r.date.slice(0,7)===mk).reduce((a,r)=>a+n(r.montant),0);
-  const card=await p.$eval('#sCards .mcard',e=>e.querySelector('.mrow b').textContent);
-  chk(Math.abs(N(card)-revM)<=2,`vue simple : entrées du mois ${card} ≠ revenus datés du mois ${revM}`);
-  const depM=dep.filter(d=>d.recurrente?(!d.date||d.date.slice(0,7)<=mk):(d.date&&(d.avancee?mk:d.date.slice(0,7))===mk)).reduce((a,d)=>a+n(d.montant),0);
-  const sor=await p.$$eval('#sCards .mcard:first-child .mrow b',x=>x[3].textContent);
-  chk(Math.abs(N(sor)-depM)<=2,`vue simple : sorties du mois ${sor} ≠ dépenses du mois ${depM}`);
-  for(const h of ['6','24']){await p.selectOption('#sHorizon',h);await p.waitForTimeout(100);const r=await p.$$eval('#sTable tbody tr',x=>x.length);chk(r===4+ +h,`vue simple horizon ${h}: ${r} lignes`);}
-  const st=await p.$('#sIncoming select[data-sstat]');
-  if(st){const id=await st.getAttribute('data-sstat');await st.selectOption('encaisse');await p.waitForTimeout(150);
-    await p.click('[data-tab=revenus]');await p.waitForTimeout(100);
-    chk(await p.$eval(`[data-rid="${id}"] select[data-rf=statut]`,e=>e.value)==='encaisse','vue simple : passer en encaissé ne se répercute pas dans Revenus');}
 }
 console.log('CONTRÔLES EN ÉCHEC',fails.length);fails.forEach(f=>console.log('  '+f));console.log('JS',errs);await b.close();})();

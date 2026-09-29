@@ -6,7 +6,7 @@
 <title>Suivi financier</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root{
   --bg:#f1f2f5;--surface:#ffffff;--surface-2:#f6f7f9;--ink:#101828;--ink-2:#3a4458;--muted:#687186;--line:#e1e4ea;--line-2:#eceef2;
@@ -304,25 +304,6 @@ tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-t
 .vitem{background:var(--surface);border-radius:9px;padding:8px 10px;font-size:12.5px}
 .vitem b{display:flex;justify-content:space-between;gap:8px}
 .eq{font-size:13px;background:var(--surface-2);border-radius:10px;padding:10px 14px}
-.mcards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.mcard{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
-.mcard.now{outline:2px solid var(--gold);outline-offset:-2px}
-.mcard h3{margin-bottom:10px}
-.mrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:13px;color:var(--ink-2)}
-.mrow.sub{padding-left:16px;font-size:12px}
-.mrow b{font-weight:700;color:var(--ink);white-space:nowrap}
-.mrow.tot{border-bottom:0;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
-.mrow.tot b{font:400 22px var(--serif)}
-.incoming{display:grid;gap:14px}
-.inmonth h4{margin:0 0 6px;font:400 18px var(--serif);display:flex;justify-content:space-between;gap:10px}
-.inmonth h4 span{font:700 15px var(--sans);color:var(--good)}
-.inrow{display:grid;grid-template-columns:62px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:13px}
-.inrow:last-child{border-bottom:0}
-.inrow .d{color:var(--muted);font-size:12px}
-.inrow select{border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:11.5px;font-weight:600;background:var(--surface-2)}
-.inrow select.encaisse{background:var(--good-soft);color:var(--good);border-color:transparent}
-.inrow select.vendu{background:var(--rev-soft);color:var(--rev);border-color:transparent}
-@media (max-width:720px){.mcards{grid-template-columns:1fr}.inrow{grid-template-columns:52px 1fr auto}.inrow select{grid-column:2/4;justify-self:start}}
 .chipdep{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;background:var(--fix-soft);color:var(--fix);border-radius:999px;padding:3px 10px}
 
 /* Ressources */
@@ -350,6 +331,10 @@ dialog h2{font:400 23px var(--serif)}
 .preview td input:focus{border-color:var(--gold);outline:none}
 .preview td input.amt{text-align:right;width:96px}
 .preview tr.off td{opacity:.45}
+body.old-view{background:#F5F2EA;padding:0}
+#viewSwitch{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;border:0;border-radius:999px;padding:10px 16px;font:600 13px 'Inter',var(--sans);background:#16213A;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
+#viewSwitch:hover{background:#0F1728}
+body:not(.old-view) #viewSwitch{background:#93732C}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 15px;border-radius:9px;font-size:13px;z-index:30;box-shadow:var(--shadow)}
 
 @media (max-width:1080px){
@@ -367,7 +352,8 @@ dialog h2{font:400 23px var(--serif)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<script>window.__sfDbReady = new Promise(r => { window.__sfResolveDb = r; });</script>
+<div class="wrap" id="app" hidden>
   <header class="hero">
     <div>
       <h1>Suivi financier</h1>
@@ -383,7 +369,6 @@ dialog h2{font:400 23px var(--serif)}
   </header>
 
   <nav class="tabs" role="tablist" id="tabs">
-    <button role="tab" data-tab="simple">Vue simple</button>
     <button role="tab" data-tab="budget">Tableau de bord</button>
     <button role="tab" data-tab="systeme">Mon système</button>
     <button role="tab" data-tab="revenus">Revenus à venir</button>
@@ -444,29 +429,6 @@ dialog h2{font:400 23px var(--serif)}
     <div class="duo">
       <div class="card"><h3>Ce qui reste à passer ce mois <span id="upCount"></span></h3><div class="list num" id="upcoming"></div></div>
       <div class="card"><h3>Mois suivants <span>solde net prévu, tout compris</span></h3><div class="chart" id="miniProj"></div><p class="hint" style="margin-top:8px">Détail complet dans l'onglet Prévisionnel.</p></div>
-    </div>
-  </section>
-
-  <!-- VUE SIMPLE (ancien tableau) -->
-  <section class="panel" id="p-simple" hidden>
-    <div class="stats num" id="sRevStats"></div>
-    <div class="banner" id="sLate" hidden></div>
-    <div class="verdict" id="sVerdict"></div>
-    <div class="mcards num" id="sCards"></div>
-    <div class="card">
-      <h3>Ce qui doit rentrer <span id="sInTot"></span></h3>
-      <div class="chips" id="sInFilter" style="margin-bottom:10px"></div>
-      <div class="incoming num" id="sIncoming"></div>
-    </div>
-    <div class="card">
-      <h3>Ce qui doit sortir <span id="sOutTot"></span></h3>
-      <div class="list num" id="sOutgoing"></div>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:16px 18px 6px" class="bar-row"><h3 style="margin:0">Détail mois par mois</h3>
-        <label class="f" style="flex-direction:row;display:flex;align-items:center;gap:8px">Horizon <select id="sHorizon" style="width:auto"><option value="6">6 mois</option><option value="12" selected>12 mois</option><option value="24">24 mois</option></select></label></div>
-      <p class="hint" style="padding:0 18px 8px">Comme ton ancien tableau : entrées = revenus datés, sorties = dépenses mensuelles et ponctuelles. Solde du mois sans report d'un mois sur l'autre.</p>
-      <div class="scroll"><table class="mtable num" id="sTable"></table></div>
     </div>
   </section>
 
@@ -641,7 +603,894 @@ dialog h2{font:400 23px var(--serif)}
   </div>
 </form></dialog>
 
+<div id="oldHost" hidden></div>
+<template id="oldTpl"><style>
+  :host{
+    --ink:#16213A; --ink-soft:#3D4A66; --parchment:#F5F2EA; --panel:#FCFBF7;
+    --line:#DAD4C4; --line-soft:#E9E5D9; --brass:#93732C; --brass-soft:#EDE3C8;
+    --green:#4B6B4F; --green-soft:#E4EBE1; --rust:#A23E2E; --rust-soft:#F2E2DE; --slate:#6B7280;
+  }
+  *{box-sizing:border-box;}
+  :host{display:block;min-height:100vh;margin:0;background:var(--parchment);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:30px 40px 60px;}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:16px;}
+  .brand{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin:0 0 3px;}
+  .brand-sub{font-size:12.5px;color:var(--slate);margin:0;}
+  .add-btn{border:none;background:var(--ink);color:#fff;border-radius:7px;padding:11px 18px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0;}
+  .add-btn:hover{background:#0F1728;}
+
+  .top-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px;}
+  .top-tab{padding:10px 4px;margin-right:26px;font-size:14px;color:var(--slate);cursor:pointer;border-bottom:2px solid transparent;font-weight:600;}
+  .top-tab.active{color:var(--ink);border-bottom-color:var(--brass);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .cumul{background:var(--ink);color:#fff;border-radius:12px;padding:22px 26px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .cumul .n{font-family:'Fraunces',serif;font-size:34px;font-weight:600;line-height:1;}
+  .cumul .l{font-size:12px;color:#C7CCDA;margin-top:4px;}
+  .cumul-break{display:flex;gap:24px;}
+  .cumul-break div{text-align:right;}
+  .cumul-break .n2{font-family:'Fraunces',serif;font-size:18px;font-weight:600;display:block;}
+  .cumul-break .l2{font-size:11px;color:#9AA3BB;}
+
+  .stats{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+  .stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .stat .n{font-family:'Fraunces',serif;font-size:19px;font-weight:600;display:block;line-height:1.2;}
+  .stat .l{font-size:11px;color:var(--slate);margin-top:2px;}
+  .stat.encaisse .n{color:var(--green);}
+  .stat.avendre .n{color:var(--brass);}
+  .stat.depense .n{color:var(--rust);}
+
+  .filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:11.5px;padding:5px 11px;border-radius:20px;cursor:pointer;user-select:none;}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .select-bar{display:flex;align-items:center;justify-content:space-between;background:var(--brass-soft);border:1px solid var(--brass);border-radius:9px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#7A5E20;font-weight:600;}
+  .row-check, #selectAllRevenus{width:16px;height:16px;cursor:pointer;}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--slate);padding:12px 14px;border-bottom:1px solid var(--line);background:#fff;font-weight:600;}
+  thead th.sortable{cursor:pointer;user-select:none;}
+  thead th.sortable:hover{color:var(--ink);}
+  thead th.sortable .arrow{display:inline-block;margin-left:4px;opacity:0.35;font-size:10px;}
+  thead th.sortable.active .arrow{opacity:1;color:var(--brass);}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#fff;}
+  td input[type=text],td input[type=date]{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:7px 8px;font-family:inherit;font-size:13.5px;color:var(--ink);}
+  td input[type=number]{width:100px;border:1px solid transparent;background:transparent;border-radius:6px;padding:7px 8px;font-family:inherit;font-size:13.5px;color:var(--ink);text-align:right;}
+  td input:hover,td input:focus{border-color:var(--line);background:#fff;}
+  td input:focus{outline:none;border-color:var(--brass);}
+  td select{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 10px;font-family:inherit;font-size:11.5px;color:var(--ink-soft);}
+  .type-pill{border:none;font-weight:600;}
+  .type-pill.pro{background:var(--brass-soft);color:#7A5E20;}
+  .type-pill.perso{background:var(--line-soft);color:var(--ink-soft);}
+  .statut-pill{border:none;font-weight:600;}
+  .statut-pill.avendre{background:var(--line-soft);color:var(--ink-soft);}
+  .statut-pill.vendu{background:#E7E9F2;color:#3D4A8A;}
+  .statut-pill.encaisse{background:var(--green-soft);color:var(--green);}
+  .row-del{border:none;background:none;color:var(--line);cursor:pointer;font-size:17px;padding:4px 8px;}
+  .row-del:hover{color:var(--rust);}
+  .col-montant{text-align:right;font-variant-numeric:tabular-nums;}
+  .empty-row td{padding:36px 14px;text-align:center;color:var(--slate);font-size:13.5px;}
+  .rec-check{display:flex;align-items:center;gap:6px;justify-content:center;}
+  .rec-check input{width:auto !important;}
+
+  .save-note{font-size:11.5px;color:var(--slate);margin-top:16px;}
+  .res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .res-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .res-card input{width:100%;border:1px solid var(--line);border-radius:7px;padding:10px 12px;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--ink);margin-top:6px;}
+  .res-card input:focus{outline:none;border-color:var(--brass);}
+  .verdict-card{border-radius:12px;padding:22px 26px;margin-bottom:20px;border:1px solid var(--line);}
+  .verdict-card.pos{background:var(--green-soft);border-color:var(--green);}
+  .verdict-card.neg{background:var(--rust-soft);border-color:var(--rust);}
+  .verdict-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .verdict-head select{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-family:inherit;color:var(--ink-soft);}
+  .verdict-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin:0;}
+  .verdict-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:4px 10px;border-radius:20px;}
+  .verdict-badge.pos{background:var(--green);color:#fff;}
+  .verdict-badge.neg{background:var(--rust);color:#fff;}
+  .verdict-rows{display:flex;gap:22px;flex-wrap:wrap;}
+  .verdict-rows > div{flex:1;min-width:150px;}
+  .verdict-rows .n{font-family:'Fraunces',serif;font-size:20px;font-weight:600;display:block;}
+  .verdict-rows .l{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .retard-banner{background:var(--rust-soft);border:1px solid var(--rust);border-radius:9px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#7A2E20;align-items:center;}
+
+  /* --- Prévisionnel --- */
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:20px;}
+  .chart-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 2px;}
+  .chart-sub{font-size:12px;color:var(--slate);margin:0 0 16px;}
+  .legend{display:flex;gap:18px;margin-bottom:12px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .forecast-summary{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .fc-stat{flex:1;min-width:170px;border:1px solid var(--line);border-radius:9px;padding:14px 16px;background:#fff;}
+  .fc-stat .n{font-family:'Fraunces',serif;font-size:20px;font-weight:600;display:block;}
+  .fc-stat .l{font-size:11px;color:var(--slate);margin-top:2px;}
+  .fc-stat.pos .n{color:var(--green);}
+  .fc-stat.neg .n{color:var(--rust);}
+  .month-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+  .month-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:20px 22px;}
+  .month-card.is-now{border-color:var(--brass);background:var(--brass-soft);}
+  .month-card h3{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 14px;}
+  .mc-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+  .mc-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;border-top:1px solid var(--line);}
+  .mc-label{font-size:12.5px;color:var(--ink-soft);}
+  .mc-value{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;}
+  .mc-value.entree{color:var(--brass);}
+  .mc-value.sortie{color:var(--rust);}
+  .mc-row:last-child .mc-value{font-family:'Fraunces',serif;font-size:19px;}
+  .mc-value.pos{color:var(--green);}
+  .mc-value.neg{color:var(--rust);}
+  #monthlyTable{min-width:480px;}
+  #monthlyTable th{white-space:nowrap;}
+  #monthlyTable td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  #monthlyTable td:first-child, #monthlyTable th:first-child{text-align:left;}
+  #monthlyTable tr.mt-current td{background:var(--brass-soft);}
+  .mt-neg{color:var(--rust);}
+  .mt-pos{color:var(--green);}
+</style>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <p class="brand">Suivi financier</p>
+      <p class="brand-sub" id="headSub">Revenus, dépenses et prévisionnel</p>
+    </div>
+    <button class="add-btn" id="addBtn">+ Ajouter</button>
+  </div>
+
+  <div class="top-tabs" id="topTabs">
+    <div class="top-tab active" data-tab="revenus">Revenus</div>
+    <div class="top-tab" data-tab="depenses">Dépenses</div>
+    <div class="top-tab" data-tab="ressources">Ressources</div>
+    <div class="top-tab" data-tab="previsionnel">Prévisionnel</div>
+  </div>
+
+  <!-- REVENUS -->
+  <div class="panel active" id="panel-revenus">
+    <div class="cumul">
+      <div><div class="n" id="cumulTotal">0 €</div><div class="l">Cumul total revenus</div></div>
+      <div class="cumul-break">
+        <div><span class="n2" id="cumulPro">0 €</span><span class="l2">Activité pro</span></div>
+        <div><span class="n2" id="cumulPerso">0 €</span><span class="l2">Ventes perso</span></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat avendre"><span class="n" id="statEnCours">0 €</span><span class="l">En cours / attendu</span></div>
+      <div class="stat"><span class="n" id="statVendu">0 €</span><span class="l">Vendu, pas encaissé</span></div>
+      <div class="stat encaisse"><span class="n" id="statEncaisse">0 €</span><span class="l">Déjà encaissé</span></div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="select-bar" id="selectBarRevenus" style="display:none;">
+      <span id="selectBarText"></span>
+      <button class="chip" id="clearSelectionBtn" style="cursor:pointer;">Désélectionner tout</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:26px"><input type="checkbox" id="selectAllRevenus"></th>
+        <th class="sortable" data-sort-rev="libelle" style="width:32%">Libellé <span class="arrow">↕</span></th><th style="width:10%">Type</th><th style="width:10%">Catégorie</th>
+        <th class="sortable" data-sort-rev="montant" style="width:10%">Montant <span class="arrow">↕</span></th><th style="width:11%">Statut</th><th class="sortable" data-sort-rev="date" style="width:10%">Date <span class="arrow">↕</span></th>
+        <th style="width:8%">Note</th><th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbodyRevenus"></tbody>
+    </table>
+    <p class="save-note" id="saveNoteRevenus"></p>
+  </div>
+
+  <!-- DEPENSES -->
+  <div class="panel" id="panel-depenses">
+    <div class="stats">
+      <div class="stat depense"><span class="n" id="depTotalMois">0 €</span><span class="l">Dépenses du mois en cours</span></div>
+      <div class="stat depense"><span class="n" id="depRecurrentes">0 €</span><span class="l">Récurrentes mensuelles</span></div>
+      <div class="stat"><span class="n" id="depPonctuelles">0 €</span><span class="l">Ponctuelles à venir</span></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th class="sortable" data-sort-dep="libelle" style="width:32%">Libellé <span class="arrow">↕</span></th><th style="width:11%">Catégorie</th><th class="sortable" data-sort-dep="montant" style="width:10%">Montant <span class="arrow">↕</span></th>
+        <th style="width:11%">Récurrente</th><th class="sortable" data-sort-dep="date" style="width:11%">Date <span class="arrow">↕</span></th>
+        <th style="width:11%">Ce mois-ci</th><th style="width:8%">Note</th><th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="tbodyDepenses"></tbody>
+    </table>
+    <p class="save-note" id="saveNoteDepenses"></p>
+  </div>
+
+  <!-- RESSOURCES -->
+  <div class="panel" id="panel-ressources">
+    <p class="chart-sub" style="margin-bottom:16px;max-width:680px;">
+      Ce que tu as déjà en main aujourd'hui. Ce total sert de point de départ au prévisionnel — sans ça, le cumul projeté part de zéro au lieu de partir de ta trésorerie réelle.
+    </p>
+    <div class="res-grid">
+      <div class="res-card">
+        <label class="field-label">Compte courant (ce mois)</label>
+        <input type="number" id="resCc" placeholder="0">
+      </div>
+      <div class="res-card">
+        <label class="field-label">Épargne</label>
+        <input type="number" id="resEpargne" placeholder="0">
+      </div>
+      <div class="res-card">
+        <label class="field-label">Autres liquidités</label>
+        <input type="number" id="resAutres" placeholder="0">
+      </div>
+    </div>
+    <div class="cumul" style="margin-top:18px;">
+      <div><div class="n" id="resTotal">0 €</div><div class="l">Total des ressources actuelles</div></div>
+    </div>
+    <p class="save-note" id="saveNoteRessources"></p>
+  </div>
+
+  <!-- PREVISIONNEL -->
+  <div class="panel" id="panel-previsionnel">
+    <p class="chart-sub" style="margin-bottom:16px;max-width:680px;">
+      <strong>Entrées</strong> = revenus datés sur ce mois. <strong>Sorties</strong> = dépenses récurrentes + dépenses ponctuelles datées sur ce mois.
+      Une ligne sans date n'apparaît dans aucun mois ci-dessous.
+    </p>
+
+    <div class="retard-banner" id="retardBanner" style="display:none;"></div>
+
+    <div class="verdict-card" id="verdictCard">
+      <div class="verdict-head">
+        <p class="verdict-title" id="verdictTitle">Sur les 3 prochains mois</p>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="verdict-badge" id="verdictBadge"></span>
+          <select id="periodeSelect">
+            <option value="1">1 mois</option>
+            <option value="3" selected>3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12">12 mois</option>
+          </select>
+        </div>
+      </div>
+      <div class="verdict-rows">
+        <div><span class="n" id="vRessources">0 €</span><span class="l">Ressources de départ</span></div>
+        <div><span class="n" id="vEntrees">0 €</span><span class="l">Entrées prévues sur la période</span></div>
+        <div><span class="n" id="vSorties">0 €</span><span class="l">Sorties prévues sur la période</span></div>
+        <div><span class="n" id="vSolde">0 €</span><span class="l">Solde projeté en fin de période</span></div>
+      </div>
+    </div>
+
+    <div class="month-cards" id="monthCards"></div>
+
+    <div class="forecast-summary" id="forecastSummary"></div>
+    <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+      <label style="font-size:12px;color:var(--slate)">Horizon prévisionnel :</label>
+      <select id="horizonSelect" class="status-select" style="border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-family:inherit;color:var(--ink-soft);">
+        <option value="6">6 mois</option>
+        <option value="12" selected>12 mois</option>
+        <option value="24">24 mois</option>
+      </select>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Entrées vs sorties par mois</p>
+      <p class="chart-sub">3 derniers mois, mois en cours, et mois de prévisionnel</p>
+      <div class="legend">
+        <span><i style="background:var(--brass)"></i>Entrées</span>
+        <span><i style="background:var(--rust)"></i>Sorties</span>
+      </div>
+      <div id="barChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Détail mois par mois</p>
+      <p class="chart-sub">Solde du mois = entrées − sorties de ce mois, indépendamment des autres mois. Aucun report d'un mois sur l'autre.</p>
+      <div style="overflow-x:auto">
+        <table id="monthlyTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</template>
+<button id="viewSwitch" type="button"></button>
 <div class="toast" id="toast" hidden></div>
+<script>
+window.__initOld = function(R){
+
+const TYPES = [["pro","Activité pro"],["perso","Vente perso"]];
+const STATUTS = [["avendre","En cours / attendu"],["vendu","Vendu"],["encaisse","Encaissé"]];
+
+let data = { revenus: null, depenses: null, ressources: {cc:"", epargne:"", autres:""} };
+let typeFilter = "tous";
+let currentTab = "revenus";
+let forecastHorizon = 12;
+let periodeAnalyse = 3;
+let db = null; let fullRes = {};
+let dbReady = false;
+let pendingWrites = {};
+let revSort = {field:null, dir:'asc'};
+let selectedRevenus = new Set();
+
+function updateSelectBar(){
+  const bar = R.getElementById('selectBarRevenus');
+  const filtered = getFilteredRevenus();
+  const selectedInView = filtered.filter(l=>selectedRevenus.has(l.id));
+  if(selectedInView.length===0){
+    bar.style.display = "none";
+    return;
+  }
+  const total = selectedInView.reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  bar.style.display = "flex";
+  R.getElementById('selectBarText').textContent =
+    `${selectedInView.length} ligne${selectedInView.length>1?'s':''} sélectionnée${selectedInView.length>1?'s':''} — Total : ${fmtEUR(total)}`;
+}
+R.getElementById('clearSelectionBtn').onclick = () => {
+  selectedRevenus.clear();
+  renderRevenus();
+};
+R.getElementById('selectAllRevenus').onchange = e => {
+  const filtered = getFilteredRevenus();
+  if(e.target.checked) filtered.forEach(l=>selectedRevenus.add(l.id));
+  else filtered.forEach(l=>selectedRevenus.delete(l.id));
+  renderRevenus();
+};
+let depSort = {field:null, dir:'asc'};
+
+function applySort(list, sort){
+  if(!sort.field) return list;
+  const arr = [...list];
+  arr.sort((a,b)=>{
+    let va = a[sort.field], vb = b[sort.field];
+    let cmp;
+    if(sort.field==="montant"){
+      cmp = (parseFloat(va)||0) - (parseFloat(vb)||0);
+    } else if(sort.field==="date"){
+      cmp = (va||"").localeCompare(vb||"");
+    } else {
+      cmp = (va||"").toLowerCase().localeCompare((vb||"").toLowerCase());
+    }
+    return sort.dir==="asc" ? cmp : -cmp;
+  });
+  return arr;
+}
+
+function updateSortHeaders(prefix, sort){
+  R.querySelectorAll(`[data-sort-${prefix}]`).forEach(th=>{
+    const field = th.dataset[prefix==='rev'?'sortRev':'sortDep'];
+    const arrow = th.querySelector('.arrow');
+    if(field===sort.field){
+      th.classList.add('active');
+      arrow.textContent = sort.dir==="asc" ? "↑" : "↓";
+    } else {
+      th.classList.remove('active');
+      arrow.textContent = "↕";
+    }
+  });
+}
+
+R.querySelectorAll('[data-sort-rev]').forEach(th=>{
+  th.onclick = ()=>{
+    const field = th.dataset.sortRev;
+    revSort.dir = (revSort.field===field && revSort.dir==="asc") ? "desc" : "asc";
+    revSort.field = field;
+    renderRevenus();
+  };
+});
+R.querySelectorAll('[data-sort-dep]').forEach(th=>{
+  th.onclick = ()=>{
+    const field = th.dataset.sortDep;
+    depSort.dir = (depSort.field===field && depSort.dir==="asc") ? "desc" : "asc";
+    depSort.field = field;
+    renderDepenses();
+  };
+});
+
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function fmtEUR(n){
+  n = parseFloat(n) || 0;
+  return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+}
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function localMonthKey(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
+}
+function setNotes(text){
+  ["saveNoteRevenus","saveNoteDepenses"].forEach(id=>{
+    const n = R.getElementById(id);
+    if(n) n.textContent = text;
+  });
+}
+
+/* ---------- DB (individual writes, no page reload) ---------- */
+async function ensureDb(){
+  if(db) return db;
+  db = await window.__sfDbReady;
+  return db;
+}
+
+function scheduleWrite(collection, id, patch){
+  const key = collection+":"+id;
+  if(!pendingWrites[key]) pendingWrites[key] = {patch:{}, timer:null};
+  Object.assign(pendingWrites[key].patch, patch);
+  setNotes("Enregistrement…");
+  if(pendingWrites[key].timer) clearTimeout(pendingWrites[key].timer);
+  pendingWrites[key].timer = setTimeout(async ()=>{
+    const p = pendingWrites[key].patch;
+    delete pendingWrites[key];
+    try{
+      const d = await ensureDb();
+      if(!d){ setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée."); return; }
+      await d.collection(collection).doc(id).update(p);
+      setNotes("Enregistré.");
+    }catch(e){
+      setNotes("Échec de l'enregistrement — réessaie.");
+    }
+  }, 400);
+}
+
+async function dbCreate(collection, id, item){
+  try{
+    const d = await ensureDb();
+    if(!d){ setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée."); return; }
+    await d.collection(collection).doc(id).set(item);
+    setNotes("Enregistré.");
+  }catch(e){
+    setNotes("Échec de l'enregistrement — réessaie.");
+  }
+}
+
+async function dbDelete(collection, id){
+  try{
+    const d = await ensureDb();
+    if(!d) return;
+    await d.collection(collection).doc(id).delete();
+  }catch(e){ /* ignore */ }
+}
+
+async function loadFromDb(){
+  const d = await ensureDb();
+  if(!d){
+    setNotes("Sauvegarde indisponible dans cet aperçu — ouvre la page publiée pour que ça s'enregistre.");
+    dbReady = false;
+    return;
+  }
+  try{
+    const [revSnap, depSnap, resDoc] = await Promise.all([
+      d.collection("revenus").get(),
+      d.collection("depenses").get(),
+      d.collection("ressources").doc("main").get().catch(()=>null)
+    ]);
+    data.revenus = revSnap.docs.map(s => ({ id: s.id, ...s.data() }));
+    data.depenses = depSnap.docs.map(s => ({ id: s.id, ...s.data() }));
+    if(resDoc && resDoc.exists){ fullRes = JSON.parse(JSON.stringify(resDoc.data() || {})); data.ressources = { cc: fullRes.cc||"", epargne: fullRes.epargne||"", autres: fullRes.autres||"" }; }
+    dbReady = true;
+  }catch(e){
+    setNotes("Échec du chargement des données.");
+  }
+  renderRevenus();
+  renderDepenses();
+  renderRessources();
+}
+
+function totalRessources(){
+  const r = data.ressources || {};
+  return (parseFloat(r.cc)||0) + (parseFloat(r.epargne)||0) + (parseFloat(r.autres)||0);
+}
+
+function renderRessources(){
+  R.getElementById('resCc').value = data.ressources.cc || "";
+  R.getElementById('resEpargne').value = data.ressources.epargne || "";
+  R.getElementById('resAutres').value = data.ressources.autres || "";
+  R.getElementById('resTotal').textContent = fmtEUR(totalRessources());
+}
+
+function updateRessource(field, value){
+  data.ressources[field] = value;
+  R.getElementById('resTotal').textContent = fmtEUR(totalRessources());
+  const note = R.getElementById('saveNoteRessources');
+  if(note) note.textContent = "Enregistrement…";
+  const key = "ressources:main";
+  if(!pendingWrites[key]) pendingWrites[key] = {timer:null};
+  if(pendingWrites[key].timer) clearTimeout(pendingWrites[key].timer);
+  pendingWrites[key].timer = setTimeout(async ()=>{
+    delete pendingWrites[key];
+    try{
+      const d = await ensureDb();
+      if(!d){ if(note) note.textContent = "Sauvegarde indisponible dans cet aperçu."; return; }
+      const out = {...fullRes, ...data.ressources, maj: new Date().toISOString().slice(0,10)};
+      if (fullRes.livretA || fullRes.ldds || fullRes.invest){ const other = (parseFloat(fullRes.ldds)||0) + (parseFloat(fullRes.invest)||0); out.livretA = String(Math.max(0, (parseFloat(data.ressources.epargne)||0) - other)); }
+      await d.collection("ressources").doc("main").set(out); fullRes = out;
+      if(note) note.textContent = "Enregistré.";
+    }catch(e){
+      if(note) note.textContent = "Échec de l'enregistrement — réessaie.";
+    }
+  }, 400);
+}
+R.getElementById('resCc').oninput = e => updateRessource('cc', e.target.value);
+R.getElementById('resEpargne').oninput = e => updateRessource('epargne', e.target.value);
+R.getElementById('resAutres').oninput = e => updateRessource('autres', e.target.value);
+
+/* ---------- Tabs ---------- */
+R.getElementById('topTabs').querySelectorAll('.top-tab').forEach(t=>{
+  t.onclick = ()=>{
+    currentTab = t.dataset.tab;
+    R.querySelectorAll('.top-tab').forEach(x=>x.classList.toggle('active', x===t));
+    R.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    R.getElementById('panel-'+currentTab).classList.add('active');
+    R.getElementById('addBtn').style.display = (currentTab==="previsionnel"||currentTab==="ressources") ? "none" : "";
+    if(currentTab==="previsionnel") renderForecast();
+  };
+});
+R.getElementById('addBtn').onclick = ()=>{
+  if(currentTab==="revenus") addRevenu();
+  if(currentTab==="depenses") addDepense();
+};
+
+/* ========== REVENUS ========== */
+function addRevenu(){
+  data.revenus = data.revenus || [];
+  const item = {id:uid(), libelle:"", type:"perso", categorie:"", montant:"", statut:"avendre", date:"", note:""};
+  data.revenus.unshift(item);
+  renderRevenus();
+  const {id, ...fields} = item;
+  dbCreate("revenus", id, fields);
+}
+function delRevenu(id){
+  data.revenus = (data.revenus||[]).filter(l=>l.id!==id);
+  selectedRevenus.delete(id);
+  renderRevenus();
+  dbDelete("revenus", id);
+}
+function updateRevenu(id, patch){
+  const l = (data.revenus||[]).find(l=>l.id===id);
+  if(!l) return;
+  Object.assign(l, patch);
+  scheduleWrite("revenus", id, patch);
+}
+function getFilteredRevenus(){
+  const revenus = data.revenus || [];
+  const filtered = typeFilter==="tous" ? revenus : revenus.filter(l=>l.type===typeFilter);
+  return applySort(filtered, revSort);
+}
+function renderRevenusStats(){
+  const lignes = data.revenus || [];
+  const total = lignes.reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const totalPro = lignes.filter(l=>l.type==="pro").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const totalPerso = lignes.filter(l=>l.type==="perso").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const enCours = lignes.filter(l=>l.statut==="avendre").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const vendu = lignes.filter(l=>l.statut==="vendu").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  const encaisse = lignes.filter(l=>l.statut==="encaisse").reduce((s,l)=>s+(parseFloat(l.montant)||0),0);
+  R.getElementById('cumulTotal').textContent = fmtEUR(total);
+  R.getElementById('cumulPro').textContent = fmtEUR(totalPro);
+  R.getElementById('cumulPerso').textContent = fmtEUR(totalPerso);
+  R.getElementById('statEnCours').textContent = fmtEUR(enCours);
+  R.getElementById('statVendu').textContent = fmtEUR(vendu);
+  R.getElementById('statEncaisse').textContent = fmtEUR(encaisse);
+}
+function renderRevenus(){
+  renderRevenusStats();
+  updateSortHeaders('rev', revSort);
+  const filtersEl = R.getElementById('filters');
+  filtersEl.innerHTML = "";
+  [["tous","Tous"],...TYPES].forEach(([k,label])=>{
+    const chip = document.createElement('div');
+    chip.className = "chip" + (typeFilter===k?" active":"");
+    chip.textContent = label;
+    chip.onclick = ()=>{ typeFilter = k; renderRevenus(); };
+    filtersEl.appendChild(chip);
+  });
+  const tbody = R.getElementById('tbodyRevenus');
+  const filtered = getFilteredRevenus();
+  if(data.revenus===null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Chargement…</td></tr>`;
+    R.getElementById('selectBarRevenus').style.display = "none";
+    return;
+  }
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Aucune ligne. Clique sur « + Ajouter ».</td></tr>`;
+    R.getElementById('selectBarRevenus').style.display = "none";
+    return;
+  }
+  tbody.innerHTML = filtered.map(l=>`
+    <tr data-id="${l.id}">
+      <td><input type="checkbox" class="row-check" ${selectedRevenus.has(l.id)?'checked':''}></td>
+      <td><input type="text" class="f-libelle" placeholder="Ex : Commission Dupont, lingot 10g…" value="${escapeHtml(l.libelle)}"></td>
+      <td><select class="f-type type-pill ${l.type}">${TYPES.map(([k,lab])=>`<option value="${k}" ${k===l.type?'selected':''}>${lab}</option>`).join("")}</select></td>
+      <td><input type="text" class="f-categorie" placeholder="Or, Vinted, client…" value="${escapeHtml(l.categorie)}"></td>
+      <td class="col-montant"><input type="number" class="f-montant" placeholder="0" value="${l.montant}"></td>
+      <td><select class="f-statut statut-pill ${l.statut}">${STATUTS.map(([k,lab])=>`<option value="${k}" ${k===l.statut?'selected':''}>${lab}</option>`).join("")}</select></td>
+      <td><input type="date" class="f-date" value="${l.date||''}"></td>
+      <td><input type="text" class="f-note" placeholder="—" value="${escapeHtml(l.note)}"></td>
+      <td><button class="row-del">×</button></td>
+    </tr>`).join("");
+  R.getElementById('selectAllRevenus').checked = filtered.length>0 && filtered.every(l=>selectedRevenus.has(l.id));
+  updateSelectBar();
+  tbody.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id = tr.dataset.id;
+    tr.querySelector('.row-check').onchange = e => {
+      if(e.target.checked) selectedRevenus.add(id); else selectedRevenus.delete(id);
+      updateSelectBar();
+      R.getElementById('selectAllRevenus').checked = filtered.every(l=>selectedRevenus.has(l.id));
+    };
+    tr.querySelector('.f-libelle').oninput = e => updateRevenu(id,{libelle:e.target.value});
+    tr.querySelector('.f-type').onchange = e => { updateRevenu(id,{type:e.target.value}); renderRevenus(); };
+    tr.querySelector('.f-categorie').oninput = e => updateRevenu(id,{categorie:e.target.value});
+    tr.querySelector('.f-montant').oninput = e => { updateRevenu(id,{montant:e.target.value}); renderRevenusStats(); updateSelectBar(); };
+    tr.querySelector('.f-statut').onchange = e => { updateRevenu(id,{statut:e.target.value}); renderRevenus(); };
+    tr.querySelector('.f-date').onchange = e => updateRevenu(id,{date:e.target.value});
+    tr.querySelector('.f-note').oninput = e => updateRevenu(id,{note:e.target.value});
+    tr.querySelector('.row-del').onclick = () => delRevenu(id);
+  });
+}
+
+/* ========== DEPENSES ========== */
+function addDepense(){
+  data.depenses = data.depenses || [];
+  const item = {id:uid(), libelle:"", categorie:"", montant:"", recurrente:false, date:"", avancee:false, note:""};
+  data.depenses.unshift(item);
+  renderDepenses();
+  const {id, ...fields} = item;
+  dbCreate("depenses", id, fields);
+}
+function delDepense(id){
+  data.depenses = (data.depenses||[]).filter(l=>l.id!==id);
+  renderDepenses();
+  dbDelete("depenses", id);
+}
+function updateDepense(id, patch){
+  const l = (data.depenses||[]).find(l=>l.id===id);
+  if(!l) return;
+  Object.assign(l, patch);
+  scheduleWrite("depenses", id, patch);
+}
+function monthKey(d){ return d ? d.slice(0,7) : null; }
+function renderDepensesStats(){
+  const depenses = data.depenses || [];
+  const now = new Date();
+  const curKey = localMonthKey(now);
+  const recurrentes = depenses.filter(d=>d.recurrente && (!d.date || d.date.slice(0,7) <= curKey)).reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  const ponctuellesAVenir = depenses.filter(d=>!d.recurrente && d.date && d.date.slice(0,7) >= curKey)
+    .reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  const moisEnCours = recurrentes + depenses.filter(d=>!d.recurrente && (d.avancee || monthKey(d.date)===curKey)).reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  R.getElementById('depTotalMois').textContent = fmtEUR(moisEnCours);
+  R.getElementById('depRecurrentes').textContent = fmtEUR(recurrentes);
+  R.getElementById('depPonctuelles').textContent = fmtEUR(ponctuellesAVenir);
+}
+function renderDepenses(){
+  renderDepensesStats();
+  updateSortHeaders('dep', depSort);
+  const tbody = R.getElementById('tbodyDepenses');
+  if(data.depenses===null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Chargement…</td></tr>`;
+    return;
+  }
+  const sorted = applySort(data.depenses, depSort);
+  if(sorted.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Aucune dépense. Clique sur « + Ajouter ».</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sorted.map(l=>`
+    <tr data-id="${l.id}">
+      <td><input type="text" class="f-libelle" placeholder="Ex : Loyer bureau, assurance…" value="${escapeHtml(l.libelle)}"></td>
+      <td><input type="text" class="f-categorie" placeholder="Fixe, pro, perso…" value="${escapeHtml(l.categorie)}"></td>
+      <td class="col-montant"><input type="number" class="f-montant" placeholder="0" value="${l.montant}"></td>
+      <td><label class="rec-check"><input type="checkbox" class="f-recurrente" ${l.recurrente?'checked':''}> Mensuelle</label></td>
+      <td><input type="date" class="f-date" value="${l.date||''}" title="Pour une récurrente : mois de démarrage. Vide = comptée depuis toujours." ${l.recurrente?'':''}></td>
+      <td><label class="rec-check" title="Compte dans le mois en cours pour le calcul, sans changer la date ci-dessus."><input type="checkbox" class="f-avancee" ${l.avancee?'checked':''} ${l.recurrente?'disabled':''}> Avancée</label></td>
+      <td><input type="text" class="f-note" placeholder="—" value="${escapeHtml(l.note)}"></td>
+      <td><button class="row-del">×</button></td>
+    </tr>`).join("");
+  tbody.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id = tr.dataset.id;
+    tr.querySelector('.f-libelle').oninput = e => updateDepense(id,{libelle:e.target.value});
+    tr.querySelector('.f-categorie').oninput = e => updateDepense(id,{categorie:e.target.value});
+    tr.querySelector('.f-montant').oninput = e => { updateDepense(id,{montant:e.target.value}); renderDepensesStats(); };
+    tr.querySelector('.f-recurrente').onchange = e => { updateDepense(id,{recurrente:e.target.checked}); renderDepenses(); };
+    tr.querySelector('.f-date').onchange = e => updateDepense(id,{date:e.target.value});
+    tr.querySelector('.f-avancee').onchange = e => { updateDepense(id,{avancee:e.target.checked}); renderDepensesStats(); };
+    tr.querySelector('.f-note').oninput = e => updateDepense(id,{note:e.target.value});
+    tr.querySelector('.row-del').onclick = () => delDepense(id);
+  });
+}
+
+/* ========== PREVISIONNEL ========== */
+function monthsRange(nBack, nFwd){
+  const now = new Date();
+  const arr = [];
+  for(let i=-nBack; i<=nFwd; i++){
+    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+    arr.push({
+      key: localMonthKey(d),
+      label: d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),
+      isCurrent: i===0
+    });
+  }
+  return arr;
+}
+
+function computeMonthly(){
+  const months = monthsRange(3, Math.max(forecastHorizon, periodeAnalyse));
+  const revProByKey = {}, revPersoByKey = {}, revEncaisseByKey = {};
+  (data.revenus||[]).forEach(l=>{
+    if(!l.date) return;
+    const k = l.date.slice(0,7);
+    const bucket = l.type==="pro" ? revProByKey : revPersoByKey;
+    bucket[k] = (bucket[k]||0) + (parseFloat(l.montant)||0);
+    if(l.statut==="encaisse"){
+      revEncaisseByKey[k] = (revEncaisseByKey[k]||0) + (parseFloat(l.montant)||0);
+    }
+  });
+  const recurringItems = (data.depenses||[]).filter(d=>d.recurrente);
+  function recurringDepFor(monthKeyStr){
+    return recurringItems
+      .filter(d => !d.date || d.date.slice(0,7) <= monthKeyStr)
+      .reduce((s,d)=>s+(parseFloat(d.montant)||0),0);
+  }
+  const depPonctByKey = {};
+  const curKeyNow = localMonthKey(new Date());
+  (data.depenses||[]).filter(d=>!d.recurrente && d.date).forEach(d=>{
+    const k = d.avancee ? curKeyNow : d.date.slice(0,7);
+    depPonctByKey[k] = (depPonctByKey[k]||0) + (parseFloat(d.montant)||0);
+  });
+  const currentIdx = months.findIndex(m=>m.isCurrent);
+  return months.map((m,i)=>{
+    const revPro = revProByKey[m.key] || 0;
+    const revPerso = revPersoByKey[m.key] || 0;
+    const rev = revPro + revPerso;
+    const revEncaisse = revEncaisseByKey[m.key] || 0;
+    const revEnAttente = rev - revEncaisse;
+    const retard = i <= currentIdx && revEnAttente > 0.5;
+    const depPonct = depPonctByKey[m.key] || 0;
+    const recurringDep = recurringDepFor(m.key);
+    const dep = depPonct + recurringDep;
+    const net = rev - dep;
+    return {...m, revPro, revPerso, rev, revEncaisse, revEnAttente, retard, depRec: recurringDep, depPonct, dep, net};
+  });
+}
+
+function renderForecast(){
+  const months = computeMonthly();
+  const currentIdx = months.findIndex(m=>m.isCurrent);
+
+  renderVerdict(months, currentIdx);
+  renderRetardBanner(months, currentIdx);
+  renderMonthCards(months, currentIdx);
+
+  const futureMonths = months.slice(currentIdx+1);
+  const revFuture = futureMonths.reduce((s,m)=>s+m.rev,0);
+  const depFuture = futureMonths.reduce((s,m)=>s+m.dep,0);
+  const netFuture = revFuture - depFuture;
+  const revHorizon = months.reduce((s,m)=>s+m.rev,0);
+  const depHorizon = months.reduce((s,m)=>s+m.dep,0);
+  const netHorizon = revHorizon - depHorizon;
+
+  const summaryEl = R.getElementById('forecastSummary');
+  summaryEl.innerHTML = `
+    <div class="fc-stat ${netFuture>=0?'pos':'neg'}"><span class="n">${fmtEUR(netFuture)}</span><span class="l">Solde net, ${forecastHorizon} prochains mois (hors mois en cours)</span></div>
+    <div class="fc-stat"><span class="n">${fmtEUR(depFuture)}</span><span class="l">Sorties attendues, ${forecastHorizon} prochains mois</span></div>
+    <div class="fc-stat ${netHorizon>=0?'pos':'neg'}"><span class="n">${fmtEUR(netHorizon)}</span><span class="l">Somme des soldes mensuels sur toute la période affichée (mois par mois, sans report)</span></div>
+  `;
+  R.querySelectorAll('.chart-sub')[1].textContent = `3 derniers mois, mois en cours, et ${forecastHorizon} mois de prévisionnel`;
+
+  drawBarChart(months);
+  drawMonthlyTable(months);
+}
+
+function renderRetardBanner(months, currentIdx){
+  const pastAndNow = months.slice(0, currentIdx+1);
+  const enRetard = pastAndNow.filter(m=>m.retard);
+  const totalRetard = enRetard.reduce((s,m)=>s+m.revEnAttente,0);
+  const el = R.getElementById('retardBanner');
+  if(totalRetard <= 0.5){
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "flex";
+  const detail = enRetard.map(m=>`${m.label} (${fmtEUR(m.revEnAttente)})`).join(", ");
+  el.innerHTML = `
+    <span>⚠️ <strong>${fmtEUR(totalRetard)}</strong> attendus sur des mois déjà passés ou en cours n'ont pas été marqués « Encaissé » — vérifie ces lignes dans Revenus : ${detail}.</span>
+  `;
+}
+
+function renderVerdict(months, currentIdx){
+  const periodMonths = months.slice(currentIdx, currentIdx + periodeAnalyse);
+  const entrees = periodMonths.reduce((s,m)=>s+m.rev,0);
+  const sorties = periodMonths.reduce((s,m)=>s+m.dep,0);
+  const ressources = totalRessources();
+  const soldeProjete = ressources + entrees - sorties;
+  const cashflowPeriode = entrees - sorties;
+  const positif = soldeProjete >= 0;
+
+  R.getElementById('verdictTitle').textContent = `Sur ${periodeAnalyse===1?'le mois prochain':'les '+periodeAnalyse+' prochains mois'} (dès maintenant)`;
+  R.getElementById('verdictCard').className = "verdict-card " + (positif?'pos':'neg');
+  R.getElementById('verdictBadge').className = "verdict-badge " + (positif?'pos':'neg');
+  R.getElementById('verdictBadge').textContent = positif ? "Cash-flow couvert" : "Cash-flow insuffisant";
+  R.getElementById('vRessources').textContent = fmtEUR(ressources);
+  R.getElementById('vEntrees').textContent = fmtEUR(entrees);
+  R.getElementById('vSorties').textContent = fmtEUR(sorties);
+  R.getElementById('vSolde').textContent = fmtEUR(soldeProjete);
+}
+
+function renderMonthCards(months, currentIdx){
+  const now = months[currentIdx];
+  const next = months[currentIdx+1];
+  function cardHtml(m, title, isNow){
+    if(!m) return `<div class="month-card"><h3>${title}</h3><p style="color:var(--slate);font-size:13px;">Hors de l'horizon affiché.</p></div>`;
+    return `
+      <div class="month-card ${isNow?'is-now':''}">
+        <h3>${title} — ${m.label}</h3>
+        <div class="mc-row"><span class="mc-label">Entrées attendues (pro + perso)</span><span class="mc-value entree">${fmtEUR(m.rev)}</span></div>
+        <div class="mc-row" style="padding-left:14px;border-bottom:none;"><span class="mc-label" style="font-size:11.5px;">↳ dont déjà encaissé</span><span class="mc-value" style="font-size:12.5px;color:var(--green);">${fmtEUR(m.revEncaisse)}</span></div>
+        <div class="mc-row" style="padding-left:14px;"><span class="mc-label" style="font-size:11.5px;">↳ encore attendu${m.retard?' ⚠️':''}</span><span class="mc-value" style="font-size:12.5px;color:${m.retard?'var(--rust)':'var(--ink-soft)'};">${fmtEUR(m.revEnAttente)}</span></div>
+        <div class="mc-row"><span class="mc-label">Sorties attendues (récurrentes + ponctuelles)</span><span class="mc-value sortie">${fmtEUR(m.dep)}</span></div>
+        <div class="mc-row"><span class="mc-label">Solde du mois (entrées − sorties de ce mois seul)</span><span class="mc-value ${m.net>=0?'pos':'neg'}">${fmtEUR(m.net)}</span></div>
+      </div>`;
+  }
+  R.getElementById('monthCards').innerHTML =
+    cardHtml(now, "Ce mois-ci", true) + cardHtml(next, "Mois prochain", false);
+}
+
+function drawMonthlyTable(months){
+  const rows = months.map(m=>`
+    <tr class="${m.isCurrent?'mt-current':''}">
+      <td>${m.label}${m.isCurrent?' (en cours)':''}${m.retard?' ⚠️':''}</td>
+      <td class="mt-pos">${fmtEUR(m.rev)}</td>
+      <td class="mt-neg">${fmtEUR(m.dep)}</td>
+      <td class="${m.net>=0?'mt-pos':'mt-neg'}">${fmtEUR(m.net)}</td>
+    </tr>`).join("");
+  R.getElementById('monthlyTable').innerHTML = `
+    <thead><tr>
+      <th>Mois</th><th>Total entrées</th><th>Total sorties</th>
+      <th>Solde du mois</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function drawBarChart(months){
+  const w = Math.max(600, months.length*80);
+  const h = 240, padBottom = 34, padTop = 14;
+  const maxVal = Math.max(1, ...months.map(m=>Math.max(m.rev, m.dep)));
+  const bandW = w / months.length;
+  const barW = Math.min(22, bandW*0.28);
+  const scale = (h - padTop - padBottom) / maxVal;
+
+  let bars = "";
+  months.forEach((m,i)=>{
+    const cx = bandW*i + bandW/2;
+    const revH = m.rev*scale, depH = m.dep*scale;
+    const y0 = h - padBottom;
+    bars += `<rect x="${cx-barW-3}" y="${y0-revH}" width="${barW}" height="${revH}" rx="3" fill="var(--brass)"></rect>`;
+    bars += `<rect x="${cx+3}" y="${y0-depH}" width="${barW}" height="${depH}" rx="3" fill="var(--rust)"></rect>`;
+    bars += `<text x="${cx}" y="${h-12}" text-anchor="middle" font-size="11" fill="var(--slate)" font-family="Inter">${m.label}</text>`;
+    if(m.isCurrent){
+      bars += `<line x1="${bandW*i}" y1="${padTop}" x2="${bandW*i}" y2="${y0}" stroke="var(--line)" stroke-dasharray="3,3"></line>`;
+    }
+  });
+  R.getElementById('barChart').innerHTML =
+    `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="${h-padBottom}" x2="${w}" y2="${h-padBottom}" stroke="var(--line)"></line>
+      ${bars}
+    </svg>`;
+}
+
+function renderAll(){
+  renderRevenus();
+  renderDepenses();
+}
+
+R.getElementById('horizonSelect').onchange = e => {
+  forecastHorizon = parseInt(e.target.value);
+  renderForecast();
+};
+R.getElementById('periodeSelect').onchange = e => {
+  periodeAnalyse = parseInt(e.target.value);
+  renderForecast();
+};
+
+renderRevenus();
+renderDepenses();
+renderRessources();
+loadFromDb();
+window.__oldApp = {
+  reload: async () => { await loadFromDb(); if (currentTab === "previsionnel") renderForecast(); },
+  idle: () => Object.keys(pendingWrites).length === 0
+};
+
+};
+</script>
+
 
 <script>
 (() => {
@@ -677,23 +1526,29 @@ function armed(btn, label, action){
 
 // ================= Storage (artifact db, or this browser as fallback) =================
 const LS_KEY = 'suivi_financier_local_v1';
+// Stockage de secours dans ce navigateur : même comportement que la base en ligne
+// (documents gelés en lecture, mise à jour partielle qui exige un document existant)
+let LOCAL_DB = null;
 function localDb(){
-  let all = {};
-  try { all = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch(e){}
-  const persist = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch(e){} };
+  if (LOCAL_DB) return LOCAL_DB;
+  const read = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch(e){ return {}; } };
+  const save = all => { try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch(e){} };
   const freeze = o => { if (o && typeof o === 'object'){ Object.values(o).forEach(freeze); Object.freeze(o); } return o; };
   const snap = (id, d) => ({id, exists: !!d, data: () => d ? freeze(JSON.parse(JSON.stringify(d))) : undefined});
-  return { collection(c){ return {
-    async get(){ const o = all[c] || {}; const docs = Object.keys(o).map(id => snap(id, o[id])); return {docs, size:docs.length, empty:!docs.length}; },
+  const merge = (a, b) => { for (const k in b){ const v = b[k]; if (v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object') merge(a[k], v); else a[k] = JSON.parse(JSON.stringify(v)); } return a; };
+  return LOCAL_DB = { collection(c){ return {
+    async get(){ const o = read()[c] || {}; const docs = Object.keys(o).map(id => snap(id, o[id])); return {docs, size:docs.length, empty:!docs.length}; },
     doc(id){ return {
-      async get(){ return snap(id, (all[c]||{})[id]); },
-      async set(d){ (all[c] = all[c] || {})[id] = JSON.parse(JSON.stringify(d)); persist(); },
-      async delete(){ if (all[c]) delete all[c][id]; persist(); }
+      async get(){ return snap(id, (read()[c] || {})[id]); },
+      async set(d){ const all = read(); (all[c] = all[c] || {})[id] = JSON.parse(JSON.stringify(d)); save(all); },
+      async update(d){ const all = read(); const cur = (all[c] || {})[id]; if (!cur) throw {code:'invalid_argument', message:'document absent'}; merge(cur, d); save(all); },
+      async delete(){ const all = read(); if (all[c]) delete all[c][id]; save(all); }
     }; }
   }; } };
 }
 let db = null, mode = 'loading';
-const pend = {};
+const pend = {}; let inflight = 0;
+const newIdle = () => inflight === 0 && Object.values(pend).every(p => !p.job);
 let saveMsg = '';
 function setSave(t){ saveMsg = t; $('saveState').textContent = (mode === 'local' ? 'Enregistré sur cet appareil uniquement · ' : '') + t; }
 function write(c, id, job){
@@ -703,8 +1558,9 @@ function write(c, id, job){
   p.job = job; clearTimeout(p.timer); setSave('Enregistrement…');
   p.timer = setTimeout(() => {
     const j = p.job; p.job = null; if (!j) return;
-    p.chain = p.chain.then(() => j.op === 'set' ? db.collection(c).doc(id).set(j.data) : db.collection(c).doc(id).delete())
-      .then(() => setSave('Enregistré'), e => setSave('Échec de l\'enregistrement (' + ((e && e.code) || 'erreur') + '). Recharge la page et réessaie.'));
+    inflight++;
+    p.chain = p.chain.finally(() => {}).then(() => j.op === 'set' ? db.collection(c).doc(id).set(j.data) : db.collection(c).doc(id).delete())
+      .finally(() => { inflight--; }).then(() => setSave('Enregistré'), e => setSave('Échec de l\'enregistrement (' + ((e && e.code) || 'erreur') + '). Recharge la page et réessaie.'));
   }, 350);
 }
 const put = (c, id, data) => write(c, id, {op:'set', data});
@@ -725,7 +1581,7 @@ function resAcc(){
   return a;
 }
 let PLAN = null;
-let tab = 'simple', month = THIS, donutMode = 'prevu';
+let tab = 'budget', month = THIS, donutMode = 'prevu';
 let typeFilter = 'tous', revSort = {f:null, dir:1}, depSort = {f:null, dir:1}, horizon = 12;
 const selected = new Set();
 
@@ -733,6 +1589,7 @@ async function load(){
   let d = null;
   try { if (window.claude && typeof window.claude.use === 'function') d = await window.claude.use('db'); } catch(e){}
   db = d || localDb(); mode = d ? 'cloud' : 'local';
+  if (window.__sfResolveDb) window.__sfResolveDb(db);
   try {
     const [rv, dp, rs, it, mo, ob, rg] = await Promise.all([
       db.collection('revenus').get(), db.collection('depenses').get(),
@@ -1186,101 +2043,6 @@ function renderDepenses(){
   }));
 }
 
-// ================= Vue simple (logique de l'ancien tableau) =================
-let sPeriode = 3, sHorizon = 12, sInType = 'tous';
-function simpleMonths(){
-  const n = Math.max(sHorizon, sPeriode), out = [];
-  for (let i = -3; i <= n; i++){
-    const m = addM(THIS, i);
-    const rv = S.revenus.filter(r => r.date && r.date.slice(0,7) === m);
-    const revPro = rv.filter(r => r.type === 'pro').reduce((a,r)=>a+num(r.montant),0);
-    const revPerso = rv.filter(r => r.type !== 'pro').reduce((a,r)=>a+num(r.montant),0);
-    const enc = rv.filter(r => r.statut === 'encaisse').reduce((a,r)=>a+num(r.montant),0);
-    const depRec = S.depenses.filter(d => d.recurrente && (!d.date || d.date.slice(0,7) <= m)).reduce((a,d)=>a+num(d.montant),0);
-    const depPonct = S.depenses.filter(d => !d.recurrente && d.date && (d.avancee ? THIS : d.date.slice(0,7)) === m).reduce((a,d)=>a+num(d.montant),0);
-    const rev = revPro + revPerso, dep = depRec + depPonct;
-    out.push({m, i, revPro, revPerso, rev, enc, att: rev - enc, depRec, depPonct, dep, net: rev - dep, retard: i <= 0 && rev - enc > .5});
-  }
-  return out;
-}
-function renderSimple(){
-  const L = S.revenus, sm = f => L.filter(f).reduce((a,l)=>a+num(l.montant),0);
-  $('sRevStats').innerHTML = `
-    <div class="stat2 dark"><small>Cumul total revenus</small><b>${fmt0(sm(()=>true))}</b></div>
-    <div class="stat2"><small>Activité pro</small><b style="color:var(--gold)">${fmt0(sm(l=>l.type==='pro'))}</b></div>
-    <div class="stat2"><small>Perso</small><b>${fmt0(sm(l=>l.type!=='pro'))}</b></div>
-    <div class="stat2"><small>En cours / attendu</small><b>${fmt0(sm(l=>(l.statut||'avendre')==='avendre'))}</b></div>
-    <div class="stat2"><small>Vendu, pas encaissé</small><b style="color:var(--rev)">${fmt0(sm(l=>l.statut==='vendu'))}</b></div>
-    <div class="stat2"><small>Déjà encaissé</small><b style="color:var(--good)">${fmt0(sm(l=>l.statut==='encaisse'))}</b></div>`;
-  const ms = simpleMonths(), cur = ms.find(x => x.i === 0), next = ms.find(x => x.i === 1);
-  const late = ms.filter(x => x.retard);
-  $('sLate').hidden = !late.length;
-  $('sLate').innerHTML = late.length ? `<b>${fmt0(late.reduce((a,x)=>a+x.att,0))}</b> attendus sur des mois passés ou en cours ne sont pas marqués « Encaissé » : ${late.map(x => `${mShort(x.m)} (${fmt0(x.att)})`).join(', ')}. Vérifie-les dans la liste « Ce qui doit rentrer » ci-dessous.` : '';
-
-  const per = ms.filter(x => x.i >= 0 && x.i < sPeriode);
-  const ent = per.reduce((a,x)=>a+x.rev,0), sor = per.reduce((a,x)=>a+x.dep,0), res = totalRes(), solde = res + ent - sor, ok = solde >= 0;
-  const v = $('sVerdict'); v.className = 'verdict ' + (ok ? 'pos' : 'neg');
-  v.innerHTML = `<div class="bar-row"><h3>Sur ${sPeriode === 1 ? 'le mois en cours' : `les ${sPeriode} prochains mois`} (dès maintenant)</h3>
-      <div style="display:flex;gap:10px;align-items:center"><span class="pill ${ok ? 'ok' : 'late'}">${ok ? 'Cash-flow couvert' : 'Cash-flow insuffisant'}</span>
-      <select id="sPeriode" class="btn" style="padding:5px 8px">${[1,3,6,12].map(p => `<option value="${p}" ${p === sPeriode ? 'selected' : ''}>${p} mois</option>`).join('')}</select></div></div>
-    <div class="vrows num">
-      <div><b>${fmt0(res)}</b><small>Ressources de départ</small></div>
-      <div><b class="pos">${fmt0(ent)}</b><small>Entrées prévues sur la période</small></div>
-      <div><b class="neg">${fmt0(sor)}</b><small>Sorties prévues sur la période</small></div>
-      <div><b class="${ok ? 'pos' : 'neg'}">${fmt0(solde)}</b><small>Solde projeté en fin de période</small></div>
-    </div>`;
-  $('sPeriode').onchange = e => { sPeriode = +e.target.value; renderSimple(); };
-
-  const card = (x, title, now) => x ? `<div class="mcard ${now ? 'now' : ''}"><h3>${title} · ${mName(x.m)}</h3>
-      <div class="mrow"><span>Entrées attendues (pro + perso)</span><b style="color:var(--gold)">${fmt0(x.rev)}</b></div>
-      <div class="mrow sub"><span>↳ dont déjà encaissé</span><b style="color:var(--good)">${fmt0(x.enc)}</b></div>
-      <div class="mrow sub"><span>↳ encore attendu${x.retard ? ' (en retard)' : ''}</span><b style="color:${x.retard ? 'var(--bad)' : 'var(--ink-2)'}">${fmt0(x.att)}</b></div>
-      <div class="mrow"><span>Sorties attendues (mensuelles + ponctuelles)</span><b style="color:var(--bad)">${fmt0(x.dep)}</b></div>
-      <div class="mrow sub"><span>↳ mensuelles</span><b>${fmt0(x.depRec)}</b></div>
-      <div class="mrow sub"><span>↳ ponctuelles</span><b>${fmt0(x.depPonct)}</b></div>
-      <div class="mrow tot"><span>Solde du mois</span><b class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt0(x.net)}</b></div></div>` : '';
-  $('sCards').innerHTML = card(cur, 'Ce mois-ci', true) + card(next, 'Mois prochain', false);
-
-  // Ce qui doit rentrer : tous les revenus non encaissés, par mois
-  const pending = S.revenus.filter(r => r.statut !== 'encaisse' && num(r.montant) && (sInType === 'tous' || (sInType === 'pro') === (r.type === 'pro')));
-  const groups = {};
-  pending.forEach(r => { const k = r.date ? r.date.slice(0,7) : 'nodate'; (groups[k] = groups[k] || []).push(r); });
-  const keys = Object.keys(groups).sort((a,b) => a === 'nodate' ? 1 : b === 'nodate' ? -1 : a.localeCompare(b));
-  $('sInFilter').innerHTML = [['tous','Tous'],['pro','Pro'],['perso','Perso']].map(([k,l]) => `<button class="chip" data-sin="${k}" aria-pressed="${sInType === k}">${l}</button>`).join('');
-  $('sInTot').textContent = `${fmt0(pending.reduce((a,r)=>a+num(r.montant),0))} au total`;
-  $('sIncoming').innerHTML = keys.map(k => {
-    const rs = groups[k].sort((a,b) => (a.date || '').localeCompare(b.date || ''));
-    const title = k === 'nodate' ? 'Sans date (comptés nulle part)' : mName(k) + (idx(k) < idx(THIS) ? ' · en retard' : idx(k) === idx(THIS) ? ' · ce mois-ci' : '');
-    return `<div class="inmonth"><h4>${title}<span>+ ${fmt0(rs.reduce((a,r)=>a+num(r.montant),0))}</span></h4>${rs.map(r => {
-      const late = r.date && r.date < TODAY_ISO;
-      return `<div class="inrow"><span class="d">${r.date ? new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '—'}</span>
-        <span><button class="lbl" data-goto="revenus" data-id="${r.id}"><span class="name">${esc(r.libelle || 'Sans libellé')}</span>${r.type === 'pro' ? '<span class="pill pro">Pro</span>' : '<span class="pill">Perso</span>'}${late ? '<span class="pill late">en retard</span>' : ''}${r.categorie ? `<span class="meta">${esc(r.categorie)}</span>` : ''}</button></span>
-        <select data-sstat="${r.id}" class="${r.statut || 'avendre'}" aria-label="Statut">${STATUTS.map(([sk,t]) => `<option value="${sk}" ${sk === (r.statut || 'avendre') ? 'selected' : ''}>${t}</option>`).join('')}</select>
-        <b style="color:var(--good)">+ ${fmt0(num(r.montant))}</b></div>`; }).join('')}</div>`;
-  }).join('') || '<p class="hint">Rien en attente : tout est encaissé.</p>';
-
-  // Ce qui doit sortir : dépenses ponctuelles à venir + mensuelles
-  const outs = S.depenses.filter(d => num(d.montant) && (d.recurrente || (d.date && d.date >= TODAY_ISO.slice(0,8) + '01') || d.avancee))
-    .sort((a,b) => (a.recurrente - b.recurrente) || (a.date || '').localeCompare(b.date || ''));
-  $('sOutTot').textContent = `${fmt0(outs.filter(d => d.recurrente).reduce((a,d)=>a+num(d.montant),0))}/mois + ${fmt0(outs.filter(d => !d.recurrente).reduce((a,d)=>a+num(d.montant),0))} ponctuels`;
-  $('sOutgoing').innerHTML = outs.map(d => `<div class="li"><span class="d">${d.recurrente ? 'chaque mois' : new Date(d.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'})}</span>
-    <span class="t"><button class="lbl" data-goto="depenses" data-id="${d.id}"><span class="name">${esc(d.libelle || 'Sans libellé')}</span>${d.categorie ? `<span class="meta">${esc(d.categorie)}</span>` : ''}</button></span>
-    <span class="a" style="color:var(--bad)">− ${fmt0(num(d.montant))}</span></div>`).join('') || '<p class="hint">Aucune dépense saisie.</p>';
-
-  const rows = ms.filter(x => x.i <= sHorizon);
-  $('sTable').innerHTML = `<thead><tr><th>Mois</th><th>Entrées pro</th><th>Entrées perso</th><th>Total entrées</th><th>Déjà encaissé</th><th>Total sorties</th><th>Solde du mois</th></tr></thead><tbody>` +
-    rows.map(x => `<tr class="${x.i === 0 ? 'cur' : x.i < 0 ? 'past' : ''}"><td>${mName(x.m)}${x.i === 0 ? ' · en cours' : ''}${x.retard ? ' <span class="pill late">retard</span>' : ''}</td>
-      <td>${fmt0(x.revPro)}</td><td>${fmt0(x.revPerso)}</td><td class="pos">${fmt0(x.rev)}</td><td>${fmt0(x.enc)}</td><td class="neg">${fmt0(x.dep)}</td>
-      <td class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt0(x.net)}</td></tr>`).join('') + '</tbody>';
-}
-$('sHorizon').onchange = e => { sHorizon = +e.target.value || 12; renderSimple(); };
-document.addEventListener('click', e => { const c = e.target.closest('[data-sin]'); if (c){ sInType = c.dataset.sin; renderSimple(); } });
-document.addEventListener('change', e => {
-  const t = e.target; if (!t.dataset || !t.dataset.sstat) return;
-  const r = S.revenus.find(x => x.id === t.dataset.sstat); if (!r) return;
-  r.statut = t.value; delete r.statutAvant; put('revenus', r.id, body(r)); renderAll(); toast(t.value === 'encaisse' ? 'Marqué encaissé' : 'Statut mis à jour');
-});
-
 // ================= Mon système : le cerveau =================
 const PRO_DEF = {encours:0, cible:17500000, taux:0.7, collecte:0, upfront:3, perf:3, annee:2030, plafond:77700};
 function proCfg(){ const p = S.reglages.pro || {}; const o = {}; for (const k in PRO_DEF) o[k] = p[k] != null && p[k] !== '' ? num(p[k]) : PRO_DEF[k]; return o; }
@@ -1618,7 +2380,7 @@ function renderRes(){
 }
 
 // ================= Tabs & global render =================
-const RENDER = {simple:renderSimple, systeme:renderSystem, budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
+const RENDER = {systeme:renderSystem, budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
 function renderAll(){
   PLAN = null;
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
@@ -1637,7 +2399,7 @@ function goTab(t, rowId){
   } else window.scrollTo({top:0});
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) goTab(b.dataset.tab); });
-try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab'); const seen = localStorage.getItem('sf_simple_vu'); if (RENDER[h]) tab = h; else if (!seen) { tab = 'simple'; localStorage.setItem('sf_simple_vu', '1'); } else if (s && RENDER[s]) tab = s; } catch(e){}
+try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab'); if (RENDER[h]) tab = h; else if (s && RENDER[s]) tab = s; } catch(e){}
 
 function rerenderKeepFocus(){ setTimeout(() => { const a = document.activeElement && document.activeElement.id; renderAll(); if (a){ const n = $(a); if (n && n.focus) n.focus(); } }, 0); }
 
@@ -1934,6 +2696,26 @@ $('importForm').addEventListener('submit', e => {
   $('dlgImport').close(); renderAll(); toast(`${n} ligne${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''}`);
 });
 
+// ================= Ancienne / nouvelle version =================
+const oldHost = $('oldHost');
+const shadow = oldHost.attachShadow({mode:'open'});
+shadow.appendChild($('oldTpl').content.cloneNode(true));
+window.__initOld(shadow);
+let view = 'old';
+try { const v = localStorage.getItem('sf_view'); if (v === 'new' || v === 'old') view = v; } catch(e){}
+async function waitIdle(){ for (let i = 0; i < 60; i++){ if (newIdle() && (!window.__oldApp || window.__oldApp.idle())) return; await new Promise(r => setTimeout(r, 120)); } }
+async function showView(v, reload){
+  view = v; try { localStorage.setItem('sf_view', v); } catch(e){}
+  document.body.classList.toggle('old-view', v === 'old');
+  $('app').hidden = v === 'old'; oldHost.hidden = v !== 'old';
+  $('viewSwitch').textContent = v === 'old' ? 'Nouvelle version →' : '← Ancienne version';
+  window.scrollTo({top:0});
+  if (!reload) return;
+  await waitIdle(); await new Promise(r => setTimeout(r, 150));
+  if (v === 'old') await window.__oldApp.reload(); else await load();
+}
+$('viewSwitch').onclick = () => showView(view === 'old' ? 'new' : 'old', true);
+showView(view, false);
 renderAll();
 load();
 })();
