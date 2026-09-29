@@ -2,11 +2,11 @@
 const { chromium } = require('playwright');const fs=require('fs');
 (async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'}).catch(()=>chromium.launch());
 const seed=fs.readFileSync(process.argv[2],'utf8');
-const tabs=['budget','systeme','revenus','depenses','objectifs','previsionnel','ressources'];
+const tabs=process.env.TABS?process.env.TABS.split(','):['simple','budget','systeme','revenus','depenses','objectifs','previsionnel','ressources'];
 const dead=[], ok=[], errs=[];
 for(const tab of tabs){
   const p=await b.newPage({viewport:{width:1300,height:1400}});p.on('pageerror',e=>errs.push(tab+': '+e.message));
-  await p.addInitScript(([s,t])=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_tab',t)},[seed,tab]);
+  await p.addInitScript(([s,t])=>{localStorage.setItem('suivi_financier_local_v1',s);localStorage.setItem('sf_tab',t);localStorage.setItem('sf_simple_vu','1')},[seed,tab]);
   await p.goto('file://'+require('path').resolve(__dirname,'../suivi-financier.html'));await p.waitForTimeout(400);
   const n=await p.$$eval(`#p-${tab} :is(input,select,button,summary)`,x=>x.length);
   for(let i=0;i<n;i++){

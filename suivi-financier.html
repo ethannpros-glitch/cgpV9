@@ -304,6 +304,25 @@ tr.done .name,tr.done input.cell,tr.done td.r,tr.done .ro{text-decoration:line-t
 .vitem{background:var(--surface);border-radius:9px;padding:8px 10px;font-size:12.5px}
 .vitem b{display:flex;justify-content:space-between;gap:8px}
 .eq{font-size:13px;background:var(--surface-2);border-radius:10px;padding:10px 14px}
+.mcards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mcard{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+.mcard.now{outline:2px solid var(--gold);outline-offset:-2px}
+.mcard h3{margin-bottom:10px}
+.mrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:13px;color:var(--ink-2)}
+.mrow.sub{padding-left:16px;font-size:12px}
+.mrow b{font-weight:700;color:var(--ink);white-space:nowrap}
+.mrow.tot{border-bottom:0;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
+.mrow.tot b{font:400 22px var(--serif)}
+.incoming{display:grid;gap:14px}
+.inmonth h4{margin:0 0 6px;font:400 18px var(--serif);display:flex;justify-content:space-between;gap:10px}
+.inmonth h4 span{font:700 15px var(--sans);color:var(--good)}
+.inrow{display:grid;grid-template-columns:62px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.inrow:last-child{border-bottom:0}
+.inrow .d{color:var(--muted);font-size:12px}
+.inrow select{border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:11.5px;font-weight:600;background:var(--surface-2)}
+.inrow select.encaisse{background:var(--good-soft);color:var(--good);border-color:transparent}
+.inrow select.vendu{background:var(--rev-soft);color:var(--rev);border-color:transparent}
+@media (max-width:720px){.mcards{grid-template-columns:1fr}.inrow{grid-template-columns:52px 1fr auto}.inrow select{grid-column:2/4;justify-self:start}}
 .chipdep{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;background:var(--fix-soft);color:var(--fix);border-radius:999px;padding:3px 10px}
 
 /* Ressources */
@@ -364,6 +383,7 @@ dialog h2{font:400 23px var(--serif)}
   </header>
 
   <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="simple">Vue simple</button>
     <button role="tab" data-tab="budget">Tableau de bord</button>
     <button role="tab" data-tab="systeme">Mon système</button>
     <button role="tab" data-tab="revenus">Revenus à venir</button>
@@ -424,6 +444,29 @@ dialog h2{font:400 23px var(--serif)}
     <div class="duo">
       <div class="card"><h3>Ce qui reste à passer ce mois <span id="upCount"></span></h3><div class="list num" id="upcoming"></div></div>
       <div class="card"><h3>Mois suivants <span>solde net prévu, tout compris</span></h3><div class="chart" id="miniProj"></div><p class="hint" style="margin-top:8px">Détail complet dans l'onglet Prévisionnel.</p></div>
+    </div>
+  </section>
+
+  <!-- VUE SIMPLE (ancien tableau) -->
+  <section class="panel" id="p-simple" hidden>
+    <div class="stats num" id="sRevStats"></div>
+    <div class="banner" id="sLate" hidden></div>
+    <div class="verdict" id="sVerdict"></div>
+    <div class="mcards num" id="sCards"></div>
+    <div class="card">
+      <h3>Ce qui doit rentrer <span id="sInTot"></span></h3>
+      <div class="chips" id="sInFilter" style="margin-bottom:10px"></div>
+      <div class="incoming num" id="sIncoming"></div>
+    </div>
+    <div class="card">
+      <h3>Ce qui doit sortir <span id="sOutTot"></span></h3>
+      <div class="list num" id="sOutgoing"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:16px 18px 6px" class="bar-row"><h3 style="margin:0">Détail mois par mois</h3>
+        <label class="f" style="flex-direction:row;display:flex;align-items:center;gap:8px">Horizon <select id="sHorizon" style="width:auto"><option value="6">6 mois</option><option value="12" selected>12 mois</option><option value="24">24 mois</option></select></label></div>
+      <p class="hint" style="padding:0 18px 8px">Comme ton ancien tableau : entrées = revenus datés, sorties = dépenses mensuelles et ponctuelles. Solde du mois sans report d'un mois sur l'autre.</p>
+      <div class="scroll"><table class="mtable num" id="sTable"></table></div>
     </div>
   </section>
 
@@ -682,7 +725,7 @@ function resAcc(){
   return a;
 }
 let PLAN = null;
-let tab = 'budget', month = THIS, donutMode = 'prevu';
+let tab = 'simple', month = THIS, donutMode = 'prevu';
 let typeFilter = 'tous', revSort = {f:null, dir:1}, depSort = {f:null, dir:1}, horizon = 12;
 const selected = new Set();
 
@@ -1143,6 +1186,101 @@ function renderDepenses(){
   }));
 }
 
+// ================= Vue simple (logique de l'ancien tableau) =================
+let sPeriode = 3, sHorizon = 12, sInType = 'tous';
+function simpleMonths(){
+  const n = Math.max(sHorizon, sPeriode), out = [];
+  for (let i = -3; i <= n; i++){
+    const m = addM(THIS, i);
+    const rv = S.revenus.filter(r => r.date && r.date.slice(0,7) === m);
+    const revPro = rv.filter(r => r.type === 'pro').reduce((a,r)=>a+num(r.montant),0);
+    const revPerso = rv.filter(r => r.type !== 'pro').reduce((a,r)=>a+num(r.montant),0);
+    const enc = rv.filter(r => r.statut === 'encaisse').reduce((a,r)=>a+num(r.montant),0);
+    const depRec = S.depenses.filter(d => d.recurrente && (!d.date || d.date.slice(0,7) <= m)).reduce((a,d)=>a+num(d.montant),0);
+    const depPonct = S.depenses.filter(d => !d.recurrente && d.date && (d.avancee ? THIS : d.date.slice(0,7)) === m).reduce((a,d)=>a+num(d.montant),0);
+    const rev = revPro + revPerso, dep = depRec + depPonct;
+    out.push({m, i, revPro, revPerso, rev, enc, att: rev - enc, depRec, depPonct, dep, net: rev - dep, retard: i <= 0 && rev - enc > .5});
+  }
+  return out;
+}
+function renderSimple(){
+  const L = S.revenus, sm = f => L.filter(f).reduce((a,l)=>a+num(l.montant),0);
+  $('sRevStats').innerHTML = `
+    <div class="stat2 dark"><small>Cumul total revenus</small><b>${fmt0(sm(()=>true))}</b></div>
+    <div class="stat2"><small>Activité pro</small><b style="color:var(--gold)">${fmt0(sm(l=>l.type==='pro'))}</b></div>
+    <div class="stat2"><small>Perso</small><b>${fmt0(sm(l=>l.type!=='pro'))}</b></div>
+    <div class="stat2"><small>En cours / attendu</small><b>${fmt0(sm(l=>(l.statut||'avendre')==='avendre'))}</b></div>
+    <div class="stat2"><small>Vendu, pas encaissé</small><b style="color:var(--rev)">${fmt0(sm(l=>l.statut==='vendu'))}</b></div>
+    <div class="stat2"><small>Déjà encaissé</small><b style="color:var(--good)">${fmt0(sm(l=>l.statut==='encaisse'))}</b></div>`;
+  const ms = simpleMonths(), cur = ms.find(x => x.i === 0), next = ms.find(x => x.i === 1);
+  const late = ms.filter(x => x.retard);
+  $('sLate').hidden = !late.length;
+  $('sLate').innerHTML = late.length ? `<b>${fmt0(late.reduce((a,x)=>a+x.att,0))}</b> attendus sur des mois passés ou en cours ne sont pas marqués « Encaissé » : ${late.map(x => `${mShort(x.m)} (${fmt0(x.att)})`).join(', ')}. Vérifie-les dans la liste « Ce qui doit rentrer » ci-dessous.` : '';
+
+  const per = ms.filter(x => x.i >= 0 && x.i < sPeriode);
+  const ent = per.reduce((a,x)=>a+x.rev,0), sor = per.reduce((a,x)=>a+x.dep,0), res = totalRes(), solde = res + ent - sor, ok = solde >= 0;
+  const v = $('sVerdict'); v.className = 'verdict ' + (ok ? 'pos' : 'neg');
+  v.innerHTML = `<div class="bar-row"><h3>Sur ${sPeriode === 1 ? 'le mois en cours' : `les ${sPeriode} prochains mois`} (dès maintenant)</h3>
+      <div style="display:flex;gap:10px;align-items:center"><span class="pill ${ok ? 'ok' : 'late'}">${ok ? 'Cash-flow couvert' : 'Cash-flow insuffisant'}</span>
+      <select id="sPeriode" class="btn" style="padding:5px 8px">${[1,3,6,12].map(p => `<option value="${p}" ${p === sPeriode ? 'selected' : ''}>${p} mois</option>`).join('')}</select></div></div>
+    <div class="vrows num">
+      <div><b>${fmt0(res)}</b><small>Ressources de départ</small></div>
+      <div><b class="pos">${fmt0(ent)}</b><small>Entrées prévues sur la période</small></div>
+      <div><b class="neg">${fmt0(sor)}</b><small>Sorties prévues sur la période</small></div>
+      <div><b class="${ok ? 'pos' : 'neg'}">${fmt0(solde)}</b><small>Solde projeté en fin de période</small></div>
+    </div>`;
+  $('sPeriode').onchange = e => { sPeriode = +e.target.value; renderSimple(); };
+
+  const card = (x, title, now) => x ? `<div class="mcard ${now ? 'now' : ''}"><h3>${title} · ${mName(x.m)}</h3>
+      <div class="mrow"><span>Entrées attendues (pro + perso)</span><b style="color:var(--gold)">${fmt0(x.rev)}</b></div>
+      <div class="mrow sub"><span>↳ dont déjà encaissé</span><b style="color:var(--good)">${fmt0(x.enc)}</b></div>
+      <div class="mrow sub"><span>↳ encore attendu${x.retard ? ' (en retard)' : ''}</span><b style="color:${x.retard ? 'var(--bad)' : 'var(--ink-2)'}">${fmt0(x.att)}</b></div>
+      <div class="mrow"><span>Sorties attendues (mensuelles + ponctuelles)</span><b style="color:var(--bad)">${fmt0(x.dep)}</b></div>
+      <div class="mrow sub"><span>↳ mensuelles</span><b>${fmt0(x.depRec)}</b></div>
+      <div class="mrow sub"><span>↳ ponctuelles</span><b>${fmt0(x.depPonct)}</b></div>
+      <div class="mrow tot"><span>Solde du mois</span><b class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt0(x.net)}</b></div></div>` : '';
+  $('sCards').innerHTML = card(cur, 'Ce mois-ci', true) + card(next, 'Mois prochain', false);
+
+  // Ce qui doit rentrer : tous les revenus non encaissés, par mois
+  const pending = S.revenus.filter(r => r.statut !== 'encaisse' && num(r.montant) && (sInType === 'tous' || (sInType === 'pro') === (r.type === 'pro')));
+  const groups = {};
+  pending.forEach(r => { const k = r.date ? r.date.slice(0,7) : 'nodate'; (groups[k] = groups[k] || []).push(r); });
+  const keys = Object.keys(groups).sort((a,b) => a === 'nodate' ? 1 : b === 'nodate' ? -1 : a.localeCompare(b));
+  $('sInFilter').innerHTML = [['tous','Tous'],['pro','Pro'],['perso','Perso']].map(([k,l]) => `<button class="chip" data-sin="${k}" aria-pressed="${sInType === k}">${l}</button>`).join('');
+  $('sInTot').textContent = `${fmt0(pending.reduce((a,r)=>a+num(r.montant),0))} au total`;
+  $('sIncoming').innerHTML = keys.map(k => {
+    const rs = groups[k].sort((a,b) => (a.date || '').localeCompare(b.date || ''));
+    const title = k === 'nodate' ? 'Sans date (comptés nulle part)' : mName(k) + (idx(k) < idx(THIS) ? ' · en retard' : idx(k) === idx(THIS) ? ' · ce mois-ci' : '');
+    return `<div class="inmonth"><h4>${title}<span>+ ${fmt0(rs.reduce((a,r)=>a+num(r.montant),0))}</span></h4>${rs.map(r => {
+      const late = r.date && r.date < TODAY_ISO;
+      return `<div class="inrow"><span class="d">${r.date ? new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '—'}</span>
+        <span><button class="lbl" data-goto="revenus" data-id="${r.id}"><span class="name">${esc(r.libelle || 'Sans libellé')}</span>${r.type === 'pro' ? '<span class="pill pro">Pro</span>' : '<span class="pill">Perso</span>'}${late ? '<span class="pill late">en retard</span>' : ''}${r.categorie ? `<span class="meta">${esc(r.categorie)}</span>` : ''}</button></span>
+        <select data-sstat="${r.id}" class="${r.statut || 'avendre'}" aria-label="Statut">${STATUTS.map(([sk,t]) => `<option value="${sk}" ${sk === (r.statut || 'avendre') ? 'selected' : ''}>${t}</option>`).join('')}</select>
+        <b style="color:var(--good)">+ ${fmt0(num(r.montant))}</b></div>`; }).join('')}</div>`;
+  }).join('') || '<p class="hint">Rien en attente : tout est encaissé.</p>';
+
+  // Ce qui doit sortir : dépenses ponctuelles à venir + mensuelles
+  const outs = S.depenses.filter(d => num(d.montant) && (d.recurrente || (d.date && d.date >= TODAY_ISO.slice(0,8) + '01') || d.avancee))
+    .sort((a,b) => (a.recurrente - b.recurrente) || (a.date || '').localeCompare(b.date || ''));
+  $('sOutTot').textContent = `${fmt0(outs.filter(d => d.recurrente).reduce((a,d)=>a+num(d.montant),0))}/mois + ${fmt0(outs.filter(d => !d.recurrente).reduce((a,d)=>a+num(d.montant),0))} ponctuels`;
+  $('sOutgoing').innerHTML = outs.map(d => `<div class="li"><span class="d">${d.recurrente ? 'chaque mois' : new Date(d.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'})}</span>
+    <span class="t"><button class="lbl" data-goto="depenses" data-id="${d.id}"><span class="name">${esc(d.libelle || 'Sans libellé')}</span>${d.categorie ? `<span class="meta">${esc(d.categorie)}</span>` : ''}</button></span>
+    <span class="a" style="color:var(--bad)">− ${fmt0(num(d.montant))}</span></div>`).join('') || '<p class="hint">Aucune dépense saisie.</p>';
+
+  const rows = ms.filter(x => x.i <= sHorizon);
+  $('sTable').innerHTML = `<thead><tr><th>Mois</th><th>Entrées pro</th><th>Entrées perso</th><th>Total entrées</th><th>Déjà encaissé</th><th>Total sorties</th><th>Solde du mois</th></tr></thead><tbody>` +
+    rows.map(x => `<tr class="${x.i === 0 ? 'cur' : x.i < 0 ? 'past' : ''}"><td>${mName(x.m)}${x.i === 0 ? ' · en cours' : ''}${x.retard ? ' <span class="pill late">retard</span>' : ''}</td>
+      <td>${fmt0(x.revPro)}</td><td>${fmt0(x.revPerso)}</td><td class="pos">${fmt0(x.rev)}</td><td>${fmt0(x.enc)}</td><td class="neg">${fmt0(x.dep)}</td>
+      <td class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt0(x.net)}</td></tr>`).join('') + '</tbody>';
+}
+$('sHorizon').onchange = e => { sHorizon = +e.target.value || 12; renderSimple(); };
+document.addEventListener('click', e => { const c = e.target.closest('[data-sin]'); if (c){ sInType = c.dataset.sin; renderSimple(); } });
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.dataset || !t.dataset.sstat) return;
+  const r = S.revenus.find(x => x.id === t.dataset.sstat); if (!r) return;
+  r.statut = t.value; delete r.statutAvant; put('revenus', r.id, body(r)); renderAll(); toast(t.value === 'encaisse' ? 'Marqué encaissé' : 'Statut mis à jour');
+});
+
 // ================= Mon système : le cerveau =================
 const PRO_DEF = {encours:0, cible:17500000, taux:0.7, collecte:0, upfront:3, perf:3, annee:2030, plafond:77700};
 function proCfg(){ const p = S.reglages.pro || {}; const o = {}; for (const k in PRO_DEF) o[k] = p[k] != null && p[k] !== '' ? num(p[k]) : PRO_DEF[k]; return o; }
@@ -1480,7 +1618,7 @@ function renderRes(){
 }
 
 // ================= Tabs & global render =================
-const RENDER = {systeme:renderSystem, budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
+const RENDER = {simple:renderSimple, systeme:renderSystem, budget:renderBudget, revenus:renderRevenus, depenses:renderDepenses, objectifs:renderGoals, previsionnel:renderPrev, ressources:renderRes};
 function renderAll(){
   PLAN = null;
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
@@ -1499,7 +1637,7 @@ function goTab(t, rowId){
   } else window.scrollTo({top:0});
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) goTab(b.dataset.tab); });
-try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab'); if (RENDER[h]) tab = h; else if (s && RENDER[s]) tab = s; } catch(e){}
+try { const h = location.hash.slice(1); const s = localStorage.getItem('sf_tab'); const seen = localStorage.getItem('sf_simple_vu'); if (RENDER[h]) tab = h; else if (!seen) { tab = 'simple'; localStorage.setItem('sf_simple_vu', '1'); } else if (s && RENDER[s]) tab = s; } catch(e){}
 
 function rerenderKeepFocus(){ setTimeout(() => { const a = document.activeElement && document.activeElement.id; renderAll(); if (a){ const n = $(a); if (n && n.focus) n.focus(); } }, 0); }
 
